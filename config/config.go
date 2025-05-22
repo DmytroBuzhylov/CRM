@@ -10,6 +10,7 @@ type AppConfig struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	Log      LogConfig
+	JWT      JWTConfig
 }
 
 type ServerConfig struct {
@@ -31,6 +32,13 @@ type DatabaseConfig struct {
 type LogConfig struct {
 	Level      string `mapstructure:"level"` // info, debug, warn, error
 	Production bool   `mapstructure:"production"`
+}
+
+type JWTConfig struct {
+	JWTAccessSecret    string        `mapstructure:"jwt_access_secret"`
+	JWTRefreshSecret   string        `mapstructure:"jwt_refresh_secret"`
+	JWTAccessLifetime  time.Duration `mapstructure:"jwt_access_token_lifetime"`
+	JWTRefreshLifetime time.Duration `mapstructure:"jwt_refresh_token_lifetime"`
 }
 
 func LoadConfig() (config AppConfig, err error) {
@@ -60,6 +68,11 @@ func LoadConfig() (config AppConfig, err error) {
 
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.production", true)
+
+	viper.SetDefault("jwt.jwt_access_secret", "jwtsecretkey228")
+	viper.SetDefault("jwt.jwt_refresh_secret", "jwtsecretrefreshkey228")
+	viper.SetDefault("jwt.jwt_access_token_lifetime", "15m")
+	viper.SetDefault("jwt.jwt_refresh_token_lifetime", "7d")
 
 	if err = viper.Unmarshal(&config); err != nil {
 		return AppConfig{}, fmt.Errorf("unable to unmarshal config: %w", err)

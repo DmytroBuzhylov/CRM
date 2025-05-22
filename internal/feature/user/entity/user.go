@@ -9,6 +9,7 @@ type User struct {
 	HashedPassword string
 	Email          string
 	Phone          string
-	Role           string
+	Role           string // admin manager employee
+	OrganizationID uint64
 	CreatedAt      time.Time
 }
