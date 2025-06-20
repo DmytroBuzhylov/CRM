@@ -10,7 +10,9 @@ type CreateUser interface {
 }
 
 type GetUser interface {
-	Get(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error)
+	GetById(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error)
+	GetByUsername(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error)
+	GetByEmail(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error)
 }
 
 type UpdateUser interface {

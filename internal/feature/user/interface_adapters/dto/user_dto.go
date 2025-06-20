@@ -14,7 +14,9 @@ type CreateUserResponse struct {
 }
 
 type GetUserRequest struct {
-	id uint64 // handler receives data from jwt
+	ID       uint64 `json:"-"` // handler receives data from jwt
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
 type GetUserResponse struct {
@@ -27,7 +29,7 @@ type GetUserResponse struct {
 }
 
 type UpdateUserRequest struct {
-	id       uint64 // handler receives data from jwt
+	ID       uint64 `json:"-"` // handler receives data from jwt
 	FullName string `json:"full_name"`
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -40,7 +42,7 @@ type UpdateUserResponse struct {
 }
 
 type DeleteUserRequest struct {
-	id uint64 // handler receives data from jwt
+	ID uint64 `json:"-"` // handler receives data from jwt
 }
 
 type DeleteUserResponse struct {

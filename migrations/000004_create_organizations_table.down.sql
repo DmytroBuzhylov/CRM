@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS organizations CASCADE;
+DROP TABLE IF EXISTS organizations_users CASCADE;

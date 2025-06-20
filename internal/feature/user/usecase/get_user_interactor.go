@@ -4,6 +4,7 @@ import (
 	"Test/internal/feature/user/interface_adapters/dto"
 	"Test/internal/feature/user/repository"
 	"context"
+	"fmt"
 )
 
 type getUserInteractor struct {
@@ -14,6 +15,6 @@ func NewGetUserInteractor(userRepo repository.UserRepository) *getUserInteractor
 	return &getUserInteractor{userRepo: userRepo}
 }
 
-func (i *getUserInteractor) Get(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error) {
-	i.userRepo.
+func (i *getUserInteractor) GetById(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error) {
+	return dto.GetUserResponse{}, fmt.Errorf("")
 }

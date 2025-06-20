@@ -21,7 +21,7 @@ func NewPostgresUserRepository(db *pgxpool.Pool) repository.UserRepository {
 }
 
 func (r *PostgresUserRepository) Create(ctx context.Context, user *entity.User) error {
-	query := `INSERT INTO users (full_name, username, hashed_password, email, phone, role, organization_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+	query := `INSERT INTO users (full_name, username, hashed_password, email, phone, role, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
 	err := r.db.QueryRow(ctx, query,
 		user.FullName,
 		user.Username,
@@ -29,7 +29,6 @@ func (r *PostgresUserRepository) Create(ctx context.Context, user *entity.User) 
 		user.Email,
 		user.Phone,
 		user.Role,
-		user.OrganizationID,
 		user.CreatedAt,
 	).Scan(&user.ID)
 
@@ -40,7 +39,7 @@ func (r *PostgresUserRepository) Create(ctx context.Context, user *entity.User) 
 }
 
 func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) (entity.User, error) {
-	query := `SELECT id, full_name, username, hashed_password, email, phone, role, organization_id, created_at FROM users WHERE email = $1`
+	query := `SELECT id, full_name, username, hashed_password, email, phone, role, created_at FROM users WHERE email = $1`
 	var user entity.User
 	err := r.db.QueryRow(ctx, query, email).Scan(
 		&user.ID,
@@ -49,7 +48,7 @@ func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) 
 		&user.HashedPassword,
 		&user.Email,
 		&user.Phone,
-		&user.OrganizationID,
+		&user.Role,
 		&user.CreatedAt,
 	)
 	if err != nil {
@@ -61,7 +60,7 @@ func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) 
 	return user, nil
 }
 func (r *PostgresUserRepository) FindById(ctx context.Context, id uint64) (entity.User, error) {
-	query := `SELECT id, full_name, username, hashed_password, email, phone, role, organization_id, created_at FROM users WHERE id = $1`
+	query := `SELECT id, full_name, username, hashed_password, email, phone, role, created_at FROM users WHERE id = $1`
 	var user entity.User
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&user.ID,
@@ -70,7 +69,7 @@ func (r *PostgresUserRepository) FindById(ctx context.Context, id uint64) (entit
 		&user.HashedPassword,
 		&user.Email,
 		&user.Phone,
-		&user.OrganizationID,
+		&user.Role,
 		&user.CreatedAt,
 	)
 	if err != nil {
@@ -83,7 +82,7 @@ func (r *PostgresUserRepository) FindById(ctx context.Context, id uint64) (entit
 }
 
 func (r *PostgresUserRepository) FindByUsername(ctx context.Context, username string) (entity.User, error) {
-	query := `SELECT id, full_name, username, hashed_password, email, phone, role, organization_id, created_at FROM users WHERE username = $1`
+	query := `SELECT id, full_name, username, hashed_password, email, phone, role, created_at FROM users WHERE username = $1`
 	var user entity.User
 	err := r.db.QueryRow(ctx, query, username).Scan(
 		&user.ID,
@@ -92,7 +91,7 @@ func (r *PostgresUserRepository) FindByUsername(ctx context.Context, username st
 		&user.HashedPassword,
 		&user.Email,
 		&user.Phone,
-		&user.OrganizationID,
+		&user.Role,
 		&user.CreatedAt,
 	)
 	if err != nil {
