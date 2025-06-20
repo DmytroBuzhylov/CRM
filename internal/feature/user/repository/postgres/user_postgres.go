@@ -5,6 +5,7 @@ import (
 	"Test/internal/feature/user/repository"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
@@ -59,6 +60,31 @@ func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) 
 	}
 	return user, nil
 }
+
+func (r *PostgresUserRepository) FindByPhone(ctx context.Context, phone string) (entity.User, error) {
+	query := `SELECT id, full_name, username, hashed_password, email, phone, role, created_at FROM users WHERE phone = $1`
+	var user entity.User
+
+	err := r.db.QueryRow(ctx, query, phone).Scan(
+		&user.ID,
+		&user.FullName,
+		&user.Username,
+		&user.HashedPassword,
+		&user.Email,
+		&user.Phone,
+		&user.Role,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.User{}, err
+		}
+		return entity.User{}, fmt.Errorf("failed to find user by phone: %w", err)
+	}
+
+	return user, nil
+}
+
 func (r *PostgresUserRepository) FindById(ctx context.Context, id uint64) (entity.User, error) {
 	query := `SELECT id, full_name, username, hashed_password, email, phone, role, created_at FROM users WHERE id = $1`
 	var user entity.User
@@ -113,8 +139,8 @@ func (r *PostgresUserRepository) SaveRefreshToken(ctx context.Context, userID ui
 	return nil
 }
 
-func (r *PostgresUserRepository) DeleteRefreshToken(ctx context.Context, tokenID string) error {
-	query := `DELETE FROM refresh_tokens WHERE id = $1`
+func (r *PostgresUserRepository) RevokeRefreshToken(ctx context.Context, tokenID string) error {
+	query := `UPDATE refresh_tokens SET revoked_at = NOW() WHERE id = $1`
 	res, err := r.db.Exec(ctx, query, tokenID)
 	if err != nil {
 		return fmt.Errorf("failed to delete refresh token: %w", err)
@@ -129,7 +155,7 @@ func (r *PostgresUserRepository) DeleteRefreshToken(ctx context.Context, tokenID
 }
 
 func (r *PostgresUserRepository) FindRefreshToken(ctx context.Context, tokenID string) (uint64, error) {
-	query := `SELECT user_id FROM refresh_tokens WHERE id = $1 AND expires_at > NOW()`
+	query := `SELECT user_id FROM refresh_tokens WHERE id = $1 AND expires_at > NOW() AND revoked_at < NOW() OR revoked_at = NULL`
 	var userID uint64
 	err := r.db.QueryRow(ctx, query, tokenID).Scan(&userID)
 	if err != nil {

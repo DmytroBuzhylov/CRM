@@ -9,8 +9,20 @@ type CreateUserRequest struct {
 }
 
 type CreateUserResponse struct {
-	ID   uint64 `json:"id"`
-	Role string `json:"role"`
+	Token string `json:"token"`
+}
+
+type LoginResponse struct {
+	Token  string
+	Status string
+}
+
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	Phone    string `json:"phone"`
+	Method   string `json:"method"` // email, username, phone
 }
 
 type GetUserRequest struct {

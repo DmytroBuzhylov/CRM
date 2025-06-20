@@ -13,6 +13,7 @@ type GetUser interface {
 	GetById(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error)
 	GetByUsername(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error)
 	GetByEmail(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error)
+	Login(ctx context.Context, req dto.LoginRequest) (dto.LoginResponse, error)
 }
 
 type UpdateUser interface {
