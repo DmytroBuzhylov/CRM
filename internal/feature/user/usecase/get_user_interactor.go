@@ -8,7 +8,9 @@ import (
 	"Test/internal/feature/user/repository/postgres"
 	"Test/internal/pkg/jwt"
 	"context"
+	"errors"
 	"fmt"
+	"time"
 )
 
 type getUserInteractor struct {
@@ -25,11 +27,11 @@ func (i *getUserInteractor) GetById(ctx context.Context, req dto.GetUserRequest)
 }
 
 func (i *getUserInteractor) GetByUsername(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error) {
-
+	return dto.GetUserResponse{}, fmt.Errorf("")
 }
 
 func (i *getUserInteractor) GetByEmail(ctx context.Context, req dto.GetUserRequest) (dto.GetUserResponse, error) {
-
+	return dto.GetUserResponse{}, fmt.Errorf("")
 }
 
 func (i *getUserInteractor) Login(ctx context.Context, req dto.LoginRequest) (dto.LoginResponse, error) {
@@ -58,18 +60,67 @@ func (i *getUserInteractor) Login(ctx context.Context, req dto.LoginRequest) (dt
 		return dto.LoginResponse{Status: "incorrect password"}, err
 	}
 
-	accesToken, refreshToken, err := jwt.GenerateTokens(user.ID, user.Role, i.jwtConfig.JWTAccessSecret, i.jwtConfig.JWTRefreshSecret, i.jwtConfig.JWTAccessLifetime, i.jwtConfig.JWTRefreshLifetime)
-
+	accessToken, refreshToken, err := jwt.GenerateTokens(user.ID, user.Role, i.jwtConfig.JWTAccessSecret, i.jwtConfig.JWTRefreshSecret, i.jwtConfig.JWTAccessLifetime, i.jwtConfig.JWTRefreshLifetime)
 	if err != nil {
 		return dto.LoginResponse{Status: "JWT generation error"}, err
 	}
 
+	return dto.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		Status:       "ok",
+	}, nil
 }
 
-func (i *getUserInteractor) Refresh(ctx context.Context, refreshToken string) error {
-	claims, err := jwt.VerifyToken(refreshToken, i.jwtConfig.JWTRefreshSecret)
+func (i *getUserInteractor) Refresh(ctx context.Context, refreshToken string) (newAccessToken string, newRefreshToken string, err error) {
+	_, err = jwt.VerifyToken(refreshToken, i.jwtConfig.JWTRefreshSecret)
 	if err != nil {
-		return err
+		return "", "", err
 	}
-	
+
+	dbRefreshToken, err := i.userRepo.FindRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return "", "", err
+	}
+
+	if time.Now().After(dbRefreshToken.ExpiresAt) {
+		i.userRepo.RevokeRefreshToken(ctx, refreshToken)
+		return "", "", errors.New("refresh token has been revoked")
+	}
+
+	if !dbRefreshToken.RevokedAt.IsZero() {
+		return "", "", errors.New("refresh token has been revoked")
+	}
+
+	user, err := i.userRepo.FindById(ctx, dbRefreshToken.UserID)
+	if err != nil {
+		return "", "", errors.New("associated user not found or inactive")
+	}
+
+	err = i.userRepo.RevokeRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to revoke old refresh token: %w", err)
+	}
+
+	newAccessToken, newRefreshToken, err = jwt.GenerateTokens(
+		dbRefreshToken.UserID,
+		user.Role,
+		i.jwtConfig.JWTAccessSecret,
+		i.jwtConfig.JWTRefreshSecret,
+		i.jwtConfig.JWTAccessLifetime,
+		i.jwtConfig.JWTRefreshLifetime,
+	)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate new tokens: %w", err)
+	}
+	err = i.userRepo.SaveRefreshToken(ctx,
+		dbRefreshToken.UserID,
+		newRefreshToken,
+		time.Now().Add(i.jwtConfig.JWTRefreshLifetime),
+	)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to store new refresh token: %w", err)
+	}
+
+	return newAccessToken, newRefreshToken, nil
 }

@@ -5,6 +5,9 @@ import (
 	taskHTTP "Test/internal/feature/task/delivery/http"
 	"Test/internal/feature/task/repository/postgres"
 	"Test/internal/feature/task/usecase"
+	http2 "Test/internal/feature/user/delivery/http"
+	postgres2 "Test/internal/feature/user/repository/postgres"
+	usecase2 "Test/internal/feature/user/usecase"
 	"Test/internal/pkg/db"
 	"Test/internal/pkg/logger"
 	"context"
@@ -41,6 +44,13 @@ func main() {
 	deleteTaskUC := usecase.NewDeleteTaskInteractor(taskRepo)
 
 	taskHandler := taskHTTP.NewTaskHandler(createTaskUC, getTaskUC, updateTaskUC, deleteTaskUC)
+
+	userRepo := postgres2.NewPostgresUserRepository(dbPool)
+	createUserUC := usecase2.NewCreateUserInteractor(userRepo, cfg.JWT)
+	getUserUC := usecase2.NewGetUserInteractor(userRepo)
+
+	authHandler := http2.NewUserHandler(createUserUC, getUserUC, cfg.JWT)
+
 	if cfg.Log.Production {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -51,6 +61,13 @@ func main() {
 
 	apiV1 := router.Group("/api/v1")
 	{
+		authAPI := apiV1.Group("/auth")
+		{
+			authAPI.POST("/create", authHandler.CreateUser)
+			authAPI.POST("/login")
+			authAPI.POST("/refresh", authHandler.Refresh)
+		}
+
 		tasksAPI := apiV1.Group("/tasks")
 		{
 			tasksAPI.POST("/", taskHandler.CreateTask)

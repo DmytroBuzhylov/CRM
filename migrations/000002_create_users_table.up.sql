@@ -1,10 +1,10 @@
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     full_name VARCHAR(255) NOT NULL,
-    username VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE ,
     hashed_password TEXT NOT NULL,
-    email VARCHAR(255),
-    phone VARCHAR(50),
+    email VARCHAR(255) UNIQUE,
+    phone VARCHAR(50) UNIQUE,
     role VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

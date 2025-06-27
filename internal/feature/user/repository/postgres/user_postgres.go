@@ -22,7 +22,7 @@ func NewPostgresUserRepository(db *pgxpool.Pool) repository.UserRepository {
 }
 
 func (r *PostgresUserRepository) Create(ctx context.Context, user *entity.User) error {
-	query := `INSERT INTO users (full_name, username, hashed_password, email, phone, role, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+	query := `INSERT INTO users (full_name, username, hashed_password, email, phone, role, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 	err := r.db.QueryRow(ctx, query,
 		user.FullName,
 		user.Username,
@@ -154,17 +154,18 @@ func (r *PostgresUserRepository) RevokeRefreshToken(ctx context.Context, tokenID
 	return nil
 }
 
-func (r *PostgresUserRepository) FindRefreshToken(ctx context.Context, tokenID string) (uint64, error) {
-	query := `SELECT user_id FROM refresh_tokens WHERE id = $1 AND expires_at > NOW() AND revoked_at < NOW() OR revoked_at = NULL`
-	var userID uint64
-	err := r.db.QueryRow(ctx, query, tokenID).Scan(&userID)
+func (r *PostgresUserRepository) FindRefreshToken(ctx context.Context, tokenID string) (repository.RefreshToken, error) {
+	query := `SELECT id, user_id, expires_at, created_at, revoked_at  FROM refresh_tokens WHERE id = $1 AND expires_at > NOW()`
+	var dbRefreshToken repository.RefreshToken
+
+	err := r.db.QueryRow(ctx, query, tokenID).Scan(&dbRefreshToken.ID, &dbRefreshToken.UserID, &dbRefreshToken.ExpiresAt, &dbRefreshToken.CreatedAt, &dbRefreshToken.RevokedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, fmt.Errorf("refresh token not found or expired: %w", err)
+			return dbRefreshToken, fmt.Errorf("refresh token not found or expired: %w", err)
 		}
-		return 0, fmt.Errorf("failed to find refresh token: %w", err)
+		return dbRefreshToken, fmt.Errorf("failed to find refresh token: %w", err)
 	}
-	return userID, nil
+	return dbRefreshToken, nil
 }
 
 func HashPassword(password string) (string, error) {

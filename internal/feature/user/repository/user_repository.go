@@ -14,5 +14,13 @@ type UserRepository interface {
 	FindById(ctx context.Context, id uint64) (entity.User, error)
 	SaveRefreshToken(ctx context.Context, userID uint64, tokenID string, expiresAt time.Time) error
 	RevokeRefreshToken(ctx context.Context, tokenID string) error
-	FindRefreshToken(ctx context.Context, tokenID string) (uint64, error)
+	FindRefreshToken(ctx context.Context, tokenID string) (RefreshToken, error)
+}
+
+type RefreshToken struct {
+	ID        string
+	UserID    uint64
+	ExpiresAt time.Time
+	CreatedAt time.Time
+	RevokedAt time.Time
 }

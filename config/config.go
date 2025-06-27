@@ -72,7 +72,7 @@ func LoadConfig() (config AppConfig, err error) {
 	viper.SetDefault("jwt.jwt_access_secret", "jwtsecretkey228")
 	viper.SetDefault("jwt.jwt_refresh_secret", "jwtsecretrefreshkey228")
 	viper.SetDefault("jwt.jwt_access_token_lifetime", "15m")
-	viper.SetDefault("jwt.jwt_refresh_token_lifetime", "7d")
+	viper.SetDefault("jwt.jwt_refresh_token_lifetime", "168h")
 
 	if err = viper.Unmarshal(&config); err != nil {
 		return AppConfig{}, fmt.Errorf("unable to unmarshal config: %w", err)

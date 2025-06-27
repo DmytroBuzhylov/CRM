@@ -1,28 +1,30 @@
 package dto
 
 type CreateUserRequest struct {
-	FullName string `json:"full_name"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
+	FullName string `json:"full_name" binding:"required,min=3"`
+	Username string `json:"username" binding:"required,min=3"`
+	Password string `json:"password" binding:"required,min=8"`
+	Email    string `json:"email" binding:"required,email"`
+	Phone    string `json:"phone" binding:"required,startswith=+380,len=13"`
 }
 
 type CreateUserResponse struct {
-	Token string `json:"token"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string
 }
 
 type LoginResponse struct {
-	Token  string
-	Status string
+	AccessToken  string `json:"access_token"`
+	RefreshToken string
+	Status       string `json:"status"`
 }
 
 type LoginRequest struct {
 	Username string `json:"username"`
-	Password string `json:"password"`
+	Password string `json:"password" binding:"required,min=8"`
 	Email    string `json:"email"`
 	Phone    string `json:"phone"`
-	Method   string `json:"method"` // email, username, phone
+	Method   string `json:"method" binding:"required"` // email, username, phone
 }
 
 type GetUserRequest struct {
