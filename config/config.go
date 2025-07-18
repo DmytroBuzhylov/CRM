@@ -42,9 +42,7 @@ type JWTConfig struct {
 }
 
 func LoadConfig() (config AppConfig, err error) {
-	viper.SetConfigFile(".env")
 	viper.AddConfigPath(".")
-	viper.AutomaticEnv()
 
 	if err = viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -59,7 +57,6 @@ func LoadConfig() (config AppConfig, err error) {
 	viper.SetDefault("server.write_timeout", "10s")
 	viper.SetDefault("server.idle_timeout", "60s")
 
-	viper.SetDefault("database.dsn", "postgres://postgres:root@localhost:5432/proj?sslmode=disable")
 	viper.SetDefault("database.max_open_conns", 25)
 	viper.SetDefault("database.max_idle_conns", 25)
 	viper.SetDefault("database.conn_max_lifetime", "5m")
@@ -69,8 +66,6 @@ func LoadConfig() (config AppConfig, err error) {
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("log.production", true)
 
-	viper.SetDefault("jwt.jwt_access_secret", "jwtsecretkey228")
-	viper.SetDefault("jwt.jwt_refresh_secret", "jwtsecretrefreshkey228")
 	viper.SetDefault("jwt.jwt_access_token_lifetime", "15m")
 	viper.SetDefault("jwt.jwt_refresh_token_lifetime", "168h")
 

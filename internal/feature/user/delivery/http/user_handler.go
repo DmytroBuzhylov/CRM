@@ -42,7 +42,7 @@ func (h *AuthHandler) CreateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "invalid body",
 		})
-		log.Warn().Err(err)
+		log.Warn().Err(err).Send()
 		return
 	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
@@ -53,7 +53,7 @@ func (h *AuthHandler) CreateUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "server error",
 		})
-		log.Warn().Err(err)
+		log.Warn().Err(err).Send()
 		return
 	}
 

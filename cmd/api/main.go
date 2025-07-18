@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"os"
