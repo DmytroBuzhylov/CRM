@@ -65,7 +65,7 @@ func main() {
 		authAPI := apiV1.Group("/auth")
 		{
 			authAPI.POST("/create", authHandler.CreateUser)
-			authAPI.POST("/login")
+			authAPI.POST("/login", authHandler.Login)
 			authAPI.POST("/refresh", authHandler.Refresh)
 		}
 
