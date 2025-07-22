@@ -5,6 +5,6 @@ import (
 	"context"
 )
 
-type CreateOrganization interface {
+type OrganizationUsecase interface {
 	Create(ctx context.Context, req dto.CreateOrganizationRequest) (dto.CreateOrganizationResponse, error)
 }

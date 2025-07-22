@@ -8,12 +8,13 @@ import (
 )
 
 type CreateTaskRequest struct {
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	Priority    uint       `json:"priority"`
-	Deadline    *time.Time `json:"deadline"`
-	AssigneeID  uint64     `json:"assignee_id"`
-	ClientID    uint64     `json:"client_id"`
+	Name           string     `json:"name"`
+	Description    string     `json:"description"`
+	Priority       uint       `json:"priority"`
+	Deadline       *time.Time `json:"deadline"`
+	AssigneeID     uint64     `json:"assignee_id"`
+	ClientID       uint64     `json:"client_id"`
+	OrganizationID uint64     `json:"-"`
 }
 
 type CreateTaskResponse struct {
@@ -68,7 +69,8 @@ type DeleteTaskResponse struct {
 }
 
 type GetTaskRequest struct {
-	ID uint64 `json:"id"`
+	ID             uint64 `json:"id"`
+	OrganizationID uint64 `json:"-"`
 }
 
 type GetTaskResponse struct {
@@ -85,8 +87,9 @@ type GetTaskResponse struct {
 }
 
 type GetTasksRequest struct {
-	Page   uint       `json:"page"`
-	Filter FilterTask `json:"filter"`
+	Page           uint       `json:"page"`
+	Filter         FilterTask `json:"filter"`
+	OrganizationID uint64     `json:"-"`
 }
 
 func (r *GetTasksRequest) GetParameters(c *gin.Context) error {

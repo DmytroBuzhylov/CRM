@@ -79,11 +79,12 @@ func (h *AuthHandler) CreateUser(c *gin.Context) {
 func (h *AuthHandler) Refresh(c *gin.Context) {
 	refreshTokenString, err := c.Cookie("refresh_token")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "Unauthorized: Refresh token missing",
 		})
 		return
 	}
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
 
@@ -122,6 +123,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	if req.Method != "email" && req.Method != "phone" && req.Method != "username" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "invalid method",
+		})
+		return
+	}
+	if req.Password == "" || len(req.Password) <= 7 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid password",
 		})
 		return
 	}

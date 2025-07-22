@@ -1,2 +1,2 @@
 build:
-	go build CRM/cmd/api
+	go build cmd/api/main.go

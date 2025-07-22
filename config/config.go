@@ -42,7 +42,10 @@ type JWTConfig struct {
 }
 
 func LoadConfig() (config AppConfig, err error) {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
+	viper.AutomaticEnv()
 
 	if err = viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -72,5 +75,8 @@ func LoadConfig() (config AppConfig, err error) {
 	if err = viper.Unmarshal(&config); err != nil {
 		return AppConfig{}, fmt.Errorf("unable to unmarshal config: %w", err)
 	}
+
+	fmt.Println(config.JWT.JWTRefreshLifetime)
+
 	return config, nil
 }
