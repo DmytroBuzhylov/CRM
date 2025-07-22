@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(255) NOT NULL UNIQUE ,
     hashed_password TEXT NOT NULL,
     email VARCHAR(255) UNIQUE,
-    phone VARCHAR(50) UNIQUE,
+    phone VARCHAR(50),
     role VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

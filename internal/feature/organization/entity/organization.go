@@ -15,7 +15,7 @@ func NewOrganization(name string, description string, ownerUserID uint64) *Organ
 	return &Organization{
 		Name:        name,
 		Description: description,
-		OwnerUserID: 0,
+		OwnerUserID: ownerUserID,
 		CreatedAt:   now,
 	}
 }

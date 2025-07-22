@@ -5,7 +5,7 @@ import (
 	"Test/internal/feature/task/usecase"
 	"context"
 	"github.com/gin-gonic/gin"
-	"log"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"strconv"
 	"time"
@@ -37,14 +37,15 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 	var req dto.CreateTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
+		log.Warn().Err(err).Send()
 		return
 	}
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
 	response, err := h.createTaskUC.Create(ctx, req)
 	if err != nil {
-		log.Print(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
 	}

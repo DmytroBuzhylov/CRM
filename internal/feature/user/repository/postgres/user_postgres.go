@@ -168,6 +168,25 @@ func (r *PostgresUserRepository) FindRefreshToken(ctx context.Context, tokenID s
 	return dbRefreshToken, nil
 }
 
+func (r *PostgresUserRepository) DeleteUser(ctx context.Context, userID uint64) error {
+	query := `DELETE FROM users WHERE id = $1`
+	_, err := r.db.Exec(ctx, query, userID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *PostgresUserRepository) GetOrganizationID(ctx context.Context, userID uint64) (*uint64, error) {
+	var organizationID *uint64
+	query := `SELECT organization_id FROM organizations_users WHERE user_id = $1`
+	err := r.db.QueryRow(ctx, query, userID).Scan(&organizationID)
+	if err != nil {
+		return nil, err
+	}
+	return organizationID, nil
+}
+
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

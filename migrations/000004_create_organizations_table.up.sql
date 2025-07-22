@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     FOREIGN KEY (owner_user_id) REFERENCES users(id)
 );
 
+
 CREATE TABLE IF NOT EXISTS organizations_users (
     organization_id bigint,
     user_id bigint,

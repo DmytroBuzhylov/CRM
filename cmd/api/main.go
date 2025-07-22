@@ -2,17 +2,22 @@ package main
 
 import (
 	"Test/config"
+	http3 "Test/internal/feature/organization/delivery/http"
+	postgres3 "Test/internal/feature/organization/repository/postgres"
+	usecase3 "Test/internal/feature/organization/usecase"
 	taskHTTP "Test/internal/feature/task/delivery/http"
 	"Test/internal/feature/task/repository/postgres"
 	"Test/internal/feature/task/usecase"
 	http2 "Test/internal/feature/user/delivery/http"
 	postgres2 "Test/internal/feature/user/repository/postgres"
 	usecase2 "Test/internal/feature/user/usecase"
+	"Test/internal/middleware"
 	"Test/internal/pkg/db"
 	"Test/internal/pkg/logger"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"os"
@@ -42,14 +47,17 @@ func main() {
 	getTaskUC := usecase.NewGetTaskInteractor(taskRepo)
 	updateTaskUC := usecase.NewUpdateTaskInteractor(taskRepo)
 	deleteTaskUC := usecase.NewDeleteTaskInteractor(taskRepo)
-
 	taskHandler := taskHTTP.NewTaskHandler(createTaskUC, getTaskUC, updateTaskUC, deleteTaskUC)
 
 	userRepo := postgres2.NewPostgresUserRepository(dbPool)
 	createUserUC := usecase2.NewCreateUserInteractor(userRepo, cfg.JWT)
-	getUserUC := usecase2.NewGetUserInteractor(userRepo)
-
+	getUserUC := usecase2.NewGetUserInteractor(userRepo, cfg.JWT)
 	authHandler := http2.NewUserHandler(createUserUC, getUserUC, cfg.JWT)
+	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT)
+
+	organizationRepo := postgres3.NewPostgresOrganizationRepository(dbPool)
+	organizationUC := usecase3.NewOrganizationUsecaseInteractor(organizationRepo)
+	organizationHandler := http3.NewOrganizationHandler(organizationUC)
 
 	if cfg.Log.Production {
 		gin.SetMode(gin.ReleaseMode)
@@ -64,12 +72,18 @@ func main() {
 		authAPI := apiV1.Group("/auth")
 		{
 			authAPI.POST("/create", authHandler.CreateUser)
-			authAPI.POST("/login")
+			authAPI.POST("/login", authHandler.Login)
 			authAPI.POST("/refresh", authHandler.Refresh)
+		}
+
+		organizationAPI := apiV1.Group("/organization").Use(authMiddleware.JWTMiddleware())
+		{
+			organizationAPI.POST("/create", organizationHandler.CreateOrganization)
 		}
 
 		tasksAPI := apiV1.Group("/tasks")
 		{
+			tasksAPI.Use(authMiddleware.JWTMiddleware())
 			tasksAPI.POST("/", taskHandler.CreateTask)
 			tasksAPI.GET("/:id", taskHandler.GetTask)
 			tasksAPI.GET("/", taskHandler.GetTasks)

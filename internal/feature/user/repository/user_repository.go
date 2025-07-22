@@ -8,6 +8,7 @@ import (
 
 type UserRepository interface {
 	Create(ctx context.Context, user *entity.User) error
+	DeleteUser(ctx context.Context, userID uint64) error
 	FindByEmail(ctx context.Context, email string) (entity.User, error)
 	FindByUsername(ctx context.Context, username string) (entity.User, error)
 	FindByPhone(ctx context.Context, phone string) (entity.User, error)
@@ -15,6 +16,7 @@ type UserRepository interface {
 	SaveRefreshToken(ctx context.Context, userID uint64, tokenID string, expiresAt time.Time) error
 	RevokeRefreshToken(ctx context.Context, tokenID string) error
 	FindRefreshToken(ctx context.Context, tokenID string) (RefreshToken, error)
+	GetOrganizationID(ctx context.Context, userID uint64) (*uint64, error)
 }
 
 type RefreshToken struct {

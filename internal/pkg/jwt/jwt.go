@@ -7,22 +7,25 @@ import (
 )
 
 type Claims struct {
-	UserID uint64 `json:"user_id"`
-	Role   string `json:"role,omitempty"`
-	jwt.Claims
+	UserID         uint64  `json:"user_id"`
+	Role           string  `json:"role"`
+	OrganizationID *uint64 `json:"organization_id,omitempty"`
+	jwt.RegisteredClaims
 }
 
 func GenerateTokens(
 	userID uint64,
 	role string,
+	organizationID *uint64,
 	accessSecret, refreshSecret string,
 	accessLifetime,
 	refreshLifetime time.Duration,
 ) (accessToken, refreshToken string, err error) {
 	accessClaims := &Claims{
-		UserID: userID,
-		Role:   role,
-		Claims: jwt.RegisteredClaims{
+		UserID:         userID,
+		Role:           role,
+		OrganizationID: organizationID,
+		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessLifetime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
@@ -37,8 +40,8 @@ func GenerateTokens(
 
 	refreshClaims := &Claims{
 		UserID: userID,
-		Claims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessLifetime)),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshLifetime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "app_crm",
