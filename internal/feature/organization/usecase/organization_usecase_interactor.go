@@ -7,15 +7,15 @@ import (
 	"context"
 )
 
-type organizationUsecaseInteractor struct {
+type organizationUseCaseInteractor struct {
 	repo repository.OrganizationRepository
 }
 
-func NewOrganizationUsecaseInteractor(repo repository.OrganizationRepository) *organizationUsecaseInteractor {
-	return &organizationUsecaseInteractor{repo: repo}
+func NewOrganizationUseCaseInteractor(repo repository.OrganizationRepository) *organizationUseCaseInteractor {
+	return &organizationUseCaseInteractor{repo: repo}
 }
 
-func (uc *organizationUsecaseInteractor) Create(ctx context.Context, req dto.CreateOrganizationRequest) (dto.CreateOrganizationResponse, error) {
+func (uc *organizationUseCaseInteractor) Create(ctx context.Context, req dto.CreateOrganizationRequest) (dto.CreateOrganizationResponse, error) {
 	newOrganization := entity.NewOrganization(req.Name, req.Description, req.OwnerUserID)
 
 	err := uc.repo.Create(ctx, newOrganization)

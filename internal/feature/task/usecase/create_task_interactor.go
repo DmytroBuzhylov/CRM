@@ -19,16 +19,17 @@ func NewCreateTaskInteractor(taskCreatorRepo repository.TaskCreator) *createTask
 func (i *createTaskInteractor) Create(ctx context.Context, req dto.CreateTaskRequest) (dto.CreateTaskResponse, error) {
 	timeNow := time.Now()
 	newTask := entity.Task{
-		Name:        req.Name,
-		Description: req.Description,
-		Priority:    req.Priority,
-		Status:      "Новая",
-		Deadline:    req.Deadline,
-		AssigneeID:  req.AssigneeID,
-		ClientID:    req.ClientID,
-		CreatedAt:   &timeNow,
+		Name:           req.Name,
+		OrganizationID: *req.OrganizationID,
+		Description:    req.Description,
+		Priority:       req.Priority,
+		Status:         "New",
+		Deadline:       req.Deadline,
+		AssigneeID:     req.AssigneeID,
+		ClientID:       req.ClientID,
+		CreatedAt:      &timeNow,
 	}
-
+	
 	createdTask, err := i.taskCreatorRepo.Create(ctx, newTask)
 	if err != nil {
 		return dto.CreateTaskResponse{}, err

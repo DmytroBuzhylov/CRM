@@ -26,6 +26,11 @@ func (r *PostgresOrganizationRepository) Create(ctx context.Context, organizatio
 		return fmt.Errorf("user with id %d does not exist", organization.OwnerUserID)
 	}
 
+	err = r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM organizations WHERE owner_user_id = $1)`, organization.OwnerUserID).Scan(&exists)
+	if exists {
+		return fmt.Errorf("the user has already created an organization")
+	}
+
 	queryToCreateOrganization := `INSERT INTO organizations (name, description, owner_user_id, created_at) VALUES ($1, $2, $3, $4) RETURNING id`
 	queryToCreateOrganizations_Users := `INSERT INTO organizations_users (organization_id, user_id, role) VALUES ($1, $2, $3)`
 

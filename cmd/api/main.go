@@ -55,9 +55,12 @@ func main() {
 	authHandler := http2.NewUserHandler(createUserUC, getUserUC, cfg.JWT)
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT)
 
+	invitationRepo := postgres3.NewPostgresInvitationRepository(dbPool)
+	invitationUC := usecase3.NewInvitationUseCaseInteractor(invitationRepo)
+
 	organizationRepo := postgres3.NewPostgresOrganizationRepository(dbPool)
-	organizationUC := usecase3.NewOrganizationUsecaseInteractor(organizationRepo)
-	organizationHandler := http3.NewOrganizationHandler(organizationUC)
+	organizationUC := usecase3.NewOrganizationUseCaseInteractor(organizationRepo)
+	organizationHandler := http3.NewOrganizationHandler(organizationUC, invitationUC)
 
 	if cfg.Log.Production {
 		gin.SetMode(gin.ReleaseMode)
@@ -79,6 +82,8 @@ func main() {
 		organizationAPI := apiV1.Group("/organization").Use(authMiddleware.JWTMiddleware())
 		{
 			organizationAPI.POST("/create", organizationHandler.CreateOrganization)
+			organizationAPI.POST("/invite", organizationHandler.CreateInvite)
+			organizationAPI.GET("/invite/:code", organizationHandler.AcceptInvite)
 		}
 
 		tasksAPI := apiV1.Group("/tasks")
