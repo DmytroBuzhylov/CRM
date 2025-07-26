@@ -40,12 +40,19 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		log.Warn().Err(err).Send()
 		return
 	}
+	organizationID, ok := c.Get("organization_id")
+	if !ok || organizationID.(*uint64) == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
+		return
+	}
+	req.OrganizationID = organizationID.(*uint64)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
 	response, err := h.createTaskUC.Create(ctx, req)
 	if err != nil {
+		log.Info().Err(err).Send()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
 	}

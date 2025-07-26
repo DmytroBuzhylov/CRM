@@ -9,8 +9,8 @@ type Task struct {
 	Priority       uint
 	Status         string
 	Deadline       *time.Time
-	AssigneeID     uint64
-	ClientID       uint64
+	AssigneeID     *uint64
+	ClientID       *uint64
 	OrganizationID uint64
 	CreatedAt      *time.Time
 	UpdatedAt      *time.Time

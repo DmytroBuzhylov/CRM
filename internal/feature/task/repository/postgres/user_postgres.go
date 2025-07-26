@@ -18,8 +18,26 @@ func NewTaskRepository(db *pgxpool.Pool) *TaskRepository {
 }
 
 func (r *TaskRepository) Create(ctx context.Context, task entity.Task) (entity.Task, error) {
-	query := `INSERT INTO tasks (name, description, priority, status, deadline, assignee_id, client_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, created_at`
-	err := r.db.QueryRow(ctx, query, task.Name, task.Description, task.Priority, task.Status, task.Deadline, task.AssigneeID, task.ClientID, time.Now(), time.Now()).Scan(&task.ID, &task.CreatedAt)
+	var exists bool
+	err := r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM organizations WHERE id = $1)`, task.OrganizationID).Scan(&exists)
+	if err != nil {
+		return entity.Task{}, fmt.Errorf("failed to find organization: %w", err)
+	}
+	if !exists {
+		return entity.Task{}, fmt.Errorf("invalid organization id")
+	}
+	if task.AssigneeID != nil {
+		err = r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM organizations_users WHERE user_id = $1)`, *task.AssigneeID).Scan(&exists)
+		if err != nil {
+			return entity.Task{}, fmt.Errorf("failed to find assignee: %w", err)
+		}
+		if !exists {
+			return entity.Task{}, fmt.Errorf("invalid assignee id")
+		}
+	}
+
+	query := `INSERT INTO tasks (name, organization_id, description, priority, status, deadline, assignee_id, client_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, created_at`
+	err = r.db.QueryRow(ctx, query, task.Name, task.OrganizationID, task.Description, task.Priority, task.Status, task.Deadline, *task.AssigneeID, *task.ClientID, time.Now(), time.Now()).Scan(&task.ID, &task.CreatedAt)
 	if err != nil {
 		return entity.Task{}, fmt.Errorf("failed to create task: %w", err)
 	}

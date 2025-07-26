@@ -12,9 +12,9 @@ type CreateTaskRequest struct {
 	Description    string     `json:"description"`
 	Priority       uint       `json:"priority"`
 	Deadline       *time.Time `json:"deadline"`
-	AssigneeID     uint64     `json:"assignee_id"`
-	ClientID       uint64     `json:"client_id"`
-	OrganizationID uint64     `json:"-"`
+	AssigneeID     *uint64    `json:"assignee_id"`
+	ClientID       *uint64    `json:"client_id"`
+	OrganizationID *uint64    `json:"-"`
 }
 
 type CreateTaskResponse struct {
@@ -29,8 +29,8 @@ type UpdateTaskRequest struct {
 	Priority    uint       `json:"priority"`
 	Status      string     `json:"status"`
 	Deadline    *time.Time `json:"deadline"`
-	AssigneeID  uint64     `json:"assignee_id"`
-	ClientID    uint64     `json:"client_id"`
+	AssigneeID  *uint64    `json:"assignee_id"`
+	ClientID    *uint64    `json:"client_id"`
 }
 
 type UpdateTaskResponse struct {
@@ -80,8 +80,8 @@ type GetTaskResponse struct {
 	Priority    uint       `json:"priority"`
 	Status      string     `json:"status"`
 	Deadline    *time.Time `json:"deadline"`
-	AssigneeID  uint64     `json:"assignee_id"`
-	ClientID    uint64     `json:"client_id"`
+	AssigneeID  *uint64    `json:"assignee_id"`
+	ClientID    *uint64    `json:"client_id"`
 	CreatedAt   *time.Time `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at"`
 }
@@ -138,11 +138,11 @@ func (r *GetTasksRequest) GetParameters(c *gin.Context) error {
 	if err != nil {
 		return err
 	}
-	r.Filter.ClientID, err = strconv.ParseUint(c.Query("client_id"), 10, 64)
+	*r.Filter.ClientID, err = strconv.ParseUint(c.Query("client_id"), 10, 64)
 	if err != nil {
 		return err
 	}
-	r.Filter.AssigneeID, err = strconv.ParseUint(c.Query("client_id"), 10, 64)
+	*r.Filter.AssigneeID, err = strconv.ParseUint(c.Query("client_id"), 10, 64)
 	if err != nil {
 		return err
 	}
@@ -154,8 +154,8 @@ type FilterTask struct {
 	Priority   uint       `json:"priority"`
 	Status     string     `json:"status"`
 	Deadline   *time.Time `json:"deadline"`
-	AssigneeID uint64     `json:"assignee_id"`
-	ClientID   uint64     `json:"client_id"`
+	AssigneeID *uint64    `json:"assignee_id"`
+	ClientID   *uint64    `json:"client_id"`
 	CreatedAt  *time.Time `json:"created_at"`
 	UpdatedAt  *time.Time `json:"updated_at"`
 }
@@ -165,8 +165,8 @@ type GetTasksResponse struct {
 }
 
 type AcceptTaskRequest struct {
-	ID         uint64 `json:"id"`
-	AssigneeID uint64 `json:"assignee_id"`
+	ID         uint64  `json:"id"`
+	AssigneeID *uint64 `json:"assignee_id"`
 }
 
 type AcceptTaskResponse struct {

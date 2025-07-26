@@ -75,8 +75,6 @@ func LoadConfig() (config AppConfig, err error) {
 	if err = viper.Unmarshal(&config); err != nil {
 		return AppConfig{}, fmt.Errorf("unable to unmarshal config: %w", err)
 	}
-
-	fmt.Println(config.JWT.JWTRefreshLifetime)
-
+	
 	return config, nil
 }
