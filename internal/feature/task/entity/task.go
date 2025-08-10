@@ -1,17 +1,20 @@
 package entity
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Task struct {
-	ID             uint64
+	ID             uuid.UUID
 	Name           string
 	Description    string
 	Priority       uint
 	Status         string
 	Deadline       *time.Time
-	AssigneeID     *uint64
-	ClientID       *uint64
-	OrganizationID uint64
+	AssigneeID     uuid.UUID
+	ClientID       uuid.UUID
+	OrganizationID uuid.UUID
 	CreatedAt      *time.Time
 	UpdatedAt      *time.Time
 }

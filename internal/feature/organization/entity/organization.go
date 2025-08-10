@@ -1,18 +1,22 @@
 package entity
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Organization struct {
-	ID          uint64
+	ID          uuid.UUID
 	Name        string
 	Description string
-	OwnerUserID uint64
+	OwnerUserID uuid.UUID
 	CreatedAt   time.Time
 }
 
-func NewOrganization(name string, description string, ownerUserID uint64) *Organization {
+func NewOrganization(name string, description string, ownerUserID uuid.UUID) *Organization {
 	now := time.Now()
 	return &Organization{
+		ID:          uuid.New(),
 		Name:        name,
 		Description: description,
 		OwnerUserID: ownerUserID,

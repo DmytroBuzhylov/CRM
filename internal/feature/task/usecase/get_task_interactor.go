@@ -19,7 +19,6 @@ func (i *getTaskInteractor) Get(ctx context.Context, req dto.GetTaskRequest) (dt
 	if err != nil {
 		return dto.GetTaskResponse{}, err
 	}
-
 	return dto.GetTaskResponse{
 		ID:          gotTask.ID,
 		Name:        gotTask.Name,
@@ -40,8 +39,8 @@ func (i *getTaskInteractor) GetTasks(ctx context.Context, req dto.GetTasksReques
 		Priority:   req.Filter.Priority,
 		Status:     req.Filter.Status,
 		Deadline:   req.Filter.Deadline,
-		AssigneeID: *req.Filter.AssigneeID,
-		ClientID:   *req.Filter.ClientID,
+		AssigneeID: req.Filter.AssigneeID,
+		ClientID:   req.Filter.ClientID,
 		CreatedAt:  req.Filter.CreatedAt,
 		UpdatedAt:  req.Filter.UpdatedAt,
 	}

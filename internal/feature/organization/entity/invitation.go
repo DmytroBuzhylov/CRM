@@ -1,10 +1,13 @@
 package entity
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type Invitation struct {
-	ID             uint64    `json:"id"`
-	OrganizationID uint64    `json:"organization_id"`
+	ID             uuid.UUID `json:"id"`
+	OrganizationID uuid.UUID `json:"organization_id"`
 	InvitedEmail   string    `json:"invited_email"`
 	InvitationCode string    `json:"invitation_code"`
 	ExpiresAt      time.Time `json:"expires_at"`

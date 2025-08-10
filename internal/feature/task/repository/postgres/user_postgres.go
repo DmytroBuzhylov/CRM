@@ -5,6 +5,7 @@ import (
 	"Test/internal/feature/task/repository"
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 )
@@ -26,8 +27,8 @@ func (r *TaskRepository) Create(ctx context.Context, task entity.Task) (entity.T
 	if !exists {
 		return entity.Task{}, fmt.Errorf("invalid organization id")
 	}
-	if task.AssigneeID != nil {
-		err = r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM organizations_users WHERE user_id = $1)`, *task.AssigneeID).Scan(&exists)
+	if task.AssigneeID != uuid.Nil {
+		err = r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM organizations_users WHERE user_id = $1)`, task.AssigneeID).Scan(&exists)
 		if err != nil {
 			return entity.Task{}, fmt.Errorf("failed to find assignee: %w", err)
 		}
@@ -36,15 +37,15 @@ func (r *TaskRepository) Create(ctx context.Context, task entity.Task) (entity.T
 		}
 	}
 
-	query := `INSERT INTO tasks (name, organization_id, description, priority, status, deadline, assignee_id, client_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, created_at`
-	err = r.db.QueryRow(ctx, query, task.Name, task.OrganizationID, task.Description, task.Priority, task.Status, task.Deadline, *task.AssigneeID, *task.ClientID, time.Now(), time.Now()).Scan(&task.ID, &task.CreatedAt)
+	query := `INSERT INTO tasks (id, name, organization_id, description, priority, status, deadline, assignee_id, client_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
+	_, err = r.db.Exec(ctx, query, task.ID, task.Name, task.OrganizationID, task.Description, task.Priority, task.Status, task.Deadline, task.AssigneeID, task.ClientID, task.ID, task.CreatedAt)
 	if err != nil {
 		return entity.Task{}, fmt.Errorf("failed to create task: %w", err)
 	}
 	return task, nil
 }
 
-func (r *TaskRepository) Get(ctx context.Context, id uint64) (entity.Task, error) {
+func (r *TaskRepository) Get(ctx context.Context, id uuid.UUID) (entity.Task, error) {
 	query := `SELECT id, name, description, priority, status, deadline, assignee_id, client_id, created_at, updated_at FROM tasks WHERE id = $1`
 	var task entity.Task
 	err := r.db.QueryRow(ctx, query, id).Scan(&task.ID, &task.Name, &task.Description, &task.Priority, &task.Status, &task.Deadline, &task.AssigneeID, &task.ClientID, &task.CreatedAt, &task.UpdatedAt)
@@ -79,12 +80,12 @@ func (r *TaskRepository) GetTasks(ctx context.Context, filter repository.TaskFil
 		args = append(args, *filter.Deadline)
 		argCount++
 	}
-	if filter.AssigneeID > 0 {
+	if filter.AssigneeID != uuid.Nil {
 		query += fmt.Sprintf(" AND assignee_id = $%d", argCount)
 		args = append(args, filter.AssigneeID)
 		argCount++
 	}
-	if filter.ClientID > 0 {
+	if filter.ClientID != uuid.Nil {
 		query += fmt.Sprintf(" AND client_id = $%d", argCount)
 		args = append(args, filter.ClientID)
 		argCount++
@@ -131,7 +132,7 @@ func (r *TaskRepository) Update(ctx context.Context, task entity.Task) (entity.T
 	return task, nil
 }
 
-func (r *TaskRepository) UpdateStatus(ctx context.Context, id uint64, status string) error {
+func (r *TaskRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
 	query := `UPDATE tasks SET status = $2, updated_at = $3 WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, id, status, time.Now())
 	if err != nil {
@@ -140,7 +141,7 @@ func (r *TaskRepository) UpdateStatus(ctx context.Context, id uint64, status str
 	return nil
 }
 
-func (r *TaskRepository) UpdateDeadline(ctx context.Context, id uint64, deadline time.Time) error {
+func (r *TaskRepository) UpdateDeadline(ctx context.Context, id uuid.UUID, deadline time.Time) error {
 	query := `UPDATE tasks SET deadline = $2, updated_at = $3 WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, id, deadline, time.Now())
 	if err != nil {
@@ -149,7 +150,7 @@ func (r *TaskRepository) UpdateDeadline(ctx context.Context, id uint64, deadline
 	return nil
 }
 
-func (r *TaskRepository) Delete(ctx context.Context, id uint64) error {
+func (r *TaskRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM tasks WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, id)
 	if err != nil {

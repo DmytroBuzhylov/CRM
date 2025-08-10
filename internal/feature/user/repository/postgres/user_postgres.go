@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
@@ -21,9 +22,10 @@ func NewPostgresUserRepository(db *pgxpool.Pool) repository.UserRepository {
 	return &PostgresUserRepository{db: db}
 }
 
-func (r *PostgresUserRepository) Create(ctx context.Context, user *entity.User) error {
-	query := `INSERT INTO users (full_name, username, hashed_password, email, phone, role, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
-	err := r.db.QueryRow(ctx, query,
+func (r *PostgresUserRepository) Create(ctx context.Context, user entity.User) error {
+	query := `INSERT INTO users (id, full_name, username, hashed_password, email, phone, role, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	_, err := r.db.Exec(ctx, query,
+		user.ID,
 		user.FullName,
 		user.Username,
 		user.HashedPassword,
@@ -31,7 +33,7 @@ func (r *PostgresUserRepository) Create(ctx context.Context, user *entity.User) 
 		user.Phone,
 		user.Role,
 		user.CreatedAt,
-	).Scan(&user.ID)
+	)
 
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
@@ -85,7 +87,7 @@ func (r *PostgresUserRepository) FindByPhone(ctx context.Context, phone string) 
 	return user, nil
 }
 
-func (r *PostgresUserRepository) FindById(ctx context.Context, id uint64) (entity.User, error) {
+func (r *PostgresUserRepository) FindById(ctx context.Context, id uuid.UUID) (entity.User, error) {
 	query := `SELECT id, full_name, username, hashed_password, email, phone, role, created_at FROM users WHERE id = $1`
 	var user entity.User
 	err := r.db.QueryRow(ctx, query, id).Scan(
@@ -129,13 +131,13 @@ func (r *PostgresUserRepository) FindByUsername(ctx context.Context, username st
 	return user, nil
 }
 
-func (r *PostgresUserRepository) SaveRefreshToken(ctx context.Context, userID uint64, tokenID string, expiresAt time.Time) error {
+func (r *PostgresUserRepository) SaveRefreshToken(ctx context.Context, userID uuid.UUID, tokenID string, expiresAt time.Time) error {
 	query := `INSERT INTO refresh_tokens (id, user_id, expires_at) VALUES ($1, $2, $3)`
 	_, err := r.db.Exec(ctx, query, tokenID, userID, expiresAt)
 	if err != nil {
 		return fmt.Errorf("failed to save refresh token: %w", err)
 	}
-	log.Debug().Str("token_id", tokenID).Uint64("user_id", userID).Msg("Refresh token saved")
+	log.Debug().Str("token_id", tokenID).Str("user_id", userID.String()).Msg("Refresh token saved")
 	return nil
 }
 
@@ -168,7 +170,7 @@ func (r *PostgresUserRepository) FindRefreshToken(ctx context.Context, tokenID s
 	return dbRefreshToken, nil
 }
 
-func (r *PostgresUserRepository) DeleteUser(ctx context.Context, userID uint64) error {
+func (r *PostgresUserRepository) DeleteUser(ctx context.Context, userID uuid.UUID) error {
 	query := `DELETE FROM users WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, userID)
 	if err != nil {
@@ -177,12 +179,12 @@ func (r *PostgresUserRepository) DeleteUser(ctx context.Context, userID uint64) 
 	return nil
 }
 
-func (r *PostgresUserRepository) GetOrganizationID(ctx context.Context, userID uint64) (*uint64, error) {
-	var organizationID *uint64
+func (r *PostgresUserRepository) GetOrganizationID(ctx context.Context, userID uuid.UUID) (uuid.UUID, error) {
+	var organizationID uuid.UUID
 	query := `SELECT organization_id FROM organizations_users WHERE user_id = $1`
 	err := r.db.QueryRow(ctx, query, userID).Scan(&organizationID)
 	if err != nil {
-		return nil, err
+		return uuid.Nil, err
 	}
 	return organizationID, nil
 }

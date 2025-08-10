@@ -11,6 +11,7 @@ type AppConfig struct {
 	Database DatabaseConfig
 	Log      LogConfig
 	JWT      JWTConfig
+	Minio    MinioConfig
 }
 
 type ServerConfig struct {
@@ -39,6 +40,13 @@ type JWTConfig struct {
 	JWTRefreshSecret   string        `mapstructure:"jwt_refresh_secret"`
 	JWTAccessLifetime  time.Duration `mapstructure:"jwt_access_token_lifetime"`
 	JWTRefreshLifetime time.Duration `mapstructure:"jwt_refresh_token_lifetime"`
+}
+
+type MinioConfig struct {
+	Endpoint        string `mapstructure:"endpoint"`
+	AccessKeyId     string `mapstructure:"access_key_id"`
+	SecretAccessKey string `mapstructure:"secret_access_key"`
+	SSL             bool   `mapstructure:"ssl"`
 }
 
 func LoadConfig() (config AppConfig, err error) {
@@ -75,6 +83,6 @@ func LoadConfig() (config AppConfig, err error) {
 	if err = viper.Unmarshal(&config); err != nil {
 		return AppConfig{}, fmt.Errorf("unable to unmarshal config: %w", err)
 	}
-	
+
 	return config, nil
 }

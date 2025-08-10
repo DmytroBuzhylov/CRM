@@ -4,6 +4,7 @@ import (
 	"Test/internal/feature/organization/entity"
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 )
@@ -40,7 +41,7 @@ func (r *PostgresOrganizationRepository) Create(ctx context.Context, organizatio
 	}
 	defer tx.Rollback(ctx)
 
-	var organizationID uint64
+	var organizationID uuid.UUID
 	err = tx.QueryRow(ctx, queryToCreateOrganization, organization.Name, organization.Description, organization.OwnerUserID, time.Now()).Scan(&organizationID)
 	if err != nil {
 		return fmt.Errorf("failed to create organization: %w", err)

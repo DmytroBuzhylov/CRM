@@ -3,20 +3,21 @@ package jwt
 import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"time"
 )
 
 type Claims struct {
-	UserID         uint64  `json:"user_id"`
-	Role           string  `json:"role"`
-	OrganizationID *uint64 `json:"organization_id,omitempty"`
+	UserID         uuid.UUID `json:"user_id"`
+	Role           string    `json:"role"`
+	OrganizationID uuid.UUID `json:"organization_id,omitempty"`
 	jwt.RegisteredClaims
 }
 
 func GenerateTokens(
-	userID uint64,
+	userID uuid.UUID,
 	role string,
-	organizationID *uint64,
+	organizationID uuid.UUID,
 	accessSecret, refreshSecret string,
 	accessLifetime,
 	refreshLifetime time.Duration,

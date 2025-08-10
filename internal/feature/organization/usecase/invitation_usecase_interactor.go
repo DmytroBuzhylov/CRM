@@ -19,8 +19,8 @@ func NewInvitationUseCaseInteractor(repo repository.InvitationRepository) *invit
 
 func (uc *invitationUseCaseInteractor) GenerateInvitation(ctx context.Context, req dto.CreateInviteRequest) (dto.CreateInviteResponse, error) {
 	code := utils.GenerateInvitationCode()
-	newInvitation := &entity.Invitation{
-		OrganizationID: *req.OrganizationID,
+	newInvitation := entity.Invitation{
+		OrganizationID: req.OrganizationID,
 		InvitedEmail:   req.InvitedEmail,
 		InvitationCode: code,
 		ExpiresAt:      time.Now().Add(time.Hour * 24 * 7),
