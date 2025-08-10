@@ -5,6 +5,7 @@ import (
 	"Test/internal/feature/task/interface_adapters/dto"
 	"Test/internal/feature/task/repository"
 	"context"
+	"github.com/google/uuid"
 	"time"
 )
 
@@ -19,8 +20,9 @@ func NewCreateTaskInteractor(taskCreatorRepo repository.TaskCreator) *createTask
 func (i *createTaskInteractor) Create(ctx context.Context, req dto.CreateTaskRequest) (dto.CreateTaskResponse, error) {
 	timeNow := time.Now()
 	newTask := entity.Task{
+		ID:             uuid.New(),
 		Name:           req.Name,
-		OrganizationID: *req.OrganizationID,
+		OrganizationID: req.OrganizationID,
 		Description:    req.Description,
 		Priority:       req.Priority,
 		Status:         "New",
@@ -28,8 +30,9 @@ func (i *createTaskInteractor) Create(ctx context.Context, req dto.CreateTaskReq
 		AssigneeID:     req.AssigneeID,
 		ClientID:       req.ClientID,
 		CreatedAt:      &timeNow,
+		UpdatedAt:      &timeNow,
 	}
-	
+
 	createdTask, err := i.taskCreatorRepo.Create(ctx, newTask)
 	if err != nil {
 		return dto.CreateTaskResponse{}, err

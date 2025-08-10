@@ -1,9 +1,11 @@
 package dto
 
+import "github.com/google/uuid"
+
 type CreateOrganizationRequest struct {
-	OwnerUserID uint64 `json:"-"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	OwnerUserID uuid.UUID `json:"-"`
+	Name        string    `json:"name" binding:"required"`
+	Description string    `json:"description" binding:"required"`
 }
 
 type CreateOrganizationResponse struct {
@@ -11,8 +13,8 @@ type CreateOrganizationResponse struct {
 }
 
 type CreateInviteRequest struct {
-	OrganizationID *uint64 `json:"-"` //from jwt claims
-	InvitedEmail   string  `json:"invited_email" binding:"required,email"`
+	OrganizationID uuid.UUID `json:"-"` //from jwt claims
+	InvitedEmail   string    `json:"invited_email" binding:"required,email"`
 }
 
 type CreateInviteResponse struct {
@@ -21,8 +23,8 @@ type CreateInviteResponse struct {
 }
 
 type AcceptInvitationRequest struct {
-	UserID uint64 `json:"-"`
-	Code   string `json:"-"`
+	UserID uuid.UUID `json:"-"`
+	Code   string    `json:"-"`
 }
 
 type AcceptInvitationResponse struct {

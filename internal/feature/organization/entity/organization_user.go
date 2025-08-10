@@ -1,7 +1,9 @@
 package entity
 
+import "github.com/google/uuid"
+
 type OrganizationUser struct {
-	OrganizationID uint64
+	OrganizationID uuid.UUID
 	UserID         uint64
 	Role           string
 }

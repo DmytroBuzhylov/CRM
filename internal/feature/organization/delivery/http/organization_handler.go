@@ -5,6 +5,7 @@ import (
 	"Test/internal/feature/organization/usecase"
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"time"
@@ -33,7 +34,7 @@ func (h *OrganizationHandler) CreateOrganization(c *gin.Context) {
 		c.JSONP(http.StatusUnauthorized, gin.H{})
 		return
 	}
-	req.OwnerUserID = userID.(uint64)
+	req.OwnerUserID = userID.(uuid.UUID)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
@@ -62,7 +63,7 @@ func (h *OrganizationHandler) CreateInvite(c *gin.Context) {
 		c.JSONP(http.StatusUnauthorized, gin.H{})
 		return
 	}
-	req.OrganizationID = organizationID.(*uint64)
+	req.OrganizationID = organizationID.(uuid.UUID)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
@@ -88,7 +89,7 @@ func (h *OrganizationHandler) AcceptInvite(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{})
 		return
 	}
-	req.UserID = userID.(uint64)
+	req.UserID = userID.(uuid.UUID)
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
 

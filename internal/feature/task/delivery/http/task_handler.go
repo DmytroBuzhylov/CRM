@@ -5,6 +5,7 @@ import (
 	"Test/internal/feature/task/usecase"
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"strconv"
@@ -41,11 +42,11 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 		return
 	}
 	organizationID, ok := c.Get("organization_id")
-	if !ok || organizationID.(*uint64) == nil {
+	if !ok || organizationID.(uuid.UUID) == uuid.Nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
 		return
 	}
-	req.OrganizationID = organizationID.(*uint64)
+	req.OrganizationID = organizationID.(uuid.UUID)
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
@@ -61,7 +62,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 }
 
 func (h *TaskHandler) GetTask(c *gin.Context) {
-	id, err := parseUint64(c.Param("id"))
+	id, err := uuid.Parse(c.Param("id"))
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
@@ -79,10 +80,6 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
-}
-
-func parseUint64(str string) (uint64, error) {
-	return strconv.ParseUint(str, 10, 64)
 }
 
 func parseUint(str string) (uint, error) {
@@ -176,7 +173,7 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	)
 
 	idStr := c.Param("id")
-	req.ID, err = parseUint64(idStr)
+	req.ID, err = uuid.Parse(idStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
 		return

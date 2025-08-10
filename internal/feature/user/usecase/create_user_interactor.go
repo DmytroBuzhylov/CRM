@@ -9,6 +9,7 @@ import (
 	"Test/internal/pkg/jwt"
 	"context"
 	"errors"
+	"github.com/google/uuid"
 	"time"
 )
 
@@ -43,7 +44,7 @@ func (i *createUserInteractor) Create(ctx context.Context, req dto.CreateUserReq
 	newAccessToken, newRefreshToken, err := jwt.GenerateTokens(
 		user.ID,
 		user.Role,
-		nil,
+		uuid.Nil,
 		i.jwtConfig.JWTAccessSecret,
 		i.jwtConfig.JWTRefreshSecret,
 		i.jwtConfig.JWTAccessLifetime,
@@ -63,5 +64,4 @@ func (i *createUserInteractor) Create(ctx context.Context, req dto.CreateUserReq
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
 	}, nil
-
 }

@@ -2,6 +2,9 @@ package main
 
 import (
 	"Test/config"
+	http4 "Test/internal/feature/inventory/delivery/http"
+	postgres4 "Test/internal/feature/inventory/repository/postgres"
+	usecase4 "Test/internal/feature/inventory/usecase"
 	http3 "Test/internal/feature/organization/delivery/http"
 	postgres3 "Test/internal/feature/organization/repository/postgres"
 	usecase3 "Test/internal/feature/organization/usecase"
@@ -14,6 +17,7 @@ import (
 	"Test/internal/middleware"
 	"Test/internal/pkg/db"
 	"Test/internal/pkg/logger"
+	"Test/internal/pkg/storage"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -42,6 +46,11 @@ func main() {
 	}
 	defer dbPool.Close()
 
+	minioS3, err := storage.NewMinioStorage(cfg.Minio.Endpoint, cfg.Minio.AccessKeyId, cfg.Minio.SecretAccessKey, "bucket", cfg.Minio.SSL)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize minioS3")
+	}
+
 	taskRepo := postgres.NewTaskRepository(dbPool)
 	createTaskUC := usecase.NewCreateTaskInteractor(taskRepo)
 	getTaskUC := usecase.NewGetTaskInteractor(taskRepo)
@@ -61,6 +70,10 @@ func main() {
 	organizationRepo := postgres3.NewPostgresOrganizationRepository(dbPool)
 	organizationUC := usecase3.NewOrganizationUseCaseInteractor(organizationRepo)
 	organizationHandler := http3.NewOrganizationHandler(organizationUC, invitationUC)
+
+	inventoryRepo := postgres4.NewPostgresInventoryRepository(dbPool)
+	inventoryUC := usecase4.NewInventoryUseCaseInteractor(inventoryRepo, minioS3)
+	inventoryHandler := http4.NewInventoryHandler(inventoryUC)
 
 	if cfg.Log.Production {
 		gin.SetMode(gin.ReleaseMode)
@@ -86,7 +99,17 @@ func main() {
 			organizationAPI.GET("/invite/:code", organizationHandler.AcceptInvite)
 		}
 
-		tasksAPI := apiV1.Group("/tasks")
+		ingredientAPI := apiV1.Group("/organization/ingredient").Use(authMiddleware.JWTMiddleware())
+		{
+			ingredientAPI.GET("/", inventoryHandler.GetOrganizationIngredients)
+			ingredientAPI.GET("/:id", inventoryHandler.GetIngredientHandler)
+			ingredientAPI.POST("/create", inventoryHandler.CreateIngredientHandler)
+			ingredientAPI.PUT("/", inventoryHandler.UpdateIngredientHandler)
+			ingredientAPI.DELETE("/:id", inventoryHandler.DeleteIngredientHandler)
+			ingredientAPI.DELETE("/", inventoryHandler.DeleteManyIngredientsHandler)
+		}
+
+		tasksAPI := apiV1.Group("/tasks").Use(authMiddleware.JWTMiddleware())
 		{
 			tasksAPI.Use(authMiddleware.JWTMiddleware())
 			tasksAPI.POST("/", taskHandler.CreateTask)

@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"time"
 )
@@ -65,7 +66,7 @@ func (i *getUserInteractor) Login(ctx context.Context, req dto.LoginRequest) (dt
 	organizationID, err := i.userRepo.GetOrganizationID(ctx, user.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			organizationID = nil
+			organizationID = uuid.Nil
 		} else {
 			return dto.LoginResponse{Status: "db error"}, err
 		}
@@ -117,7 +118,7 @@ func (i *getUserInteractor) Refresh(ctx context.Context, refreshToken string) (n
 	organizationID, err := i.userRepo.GetOrganizationID(ctx, user.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			organizationID = nil
+			organizationID = uuid.Nil
 		} else {
 			return "", "", err
 		}
