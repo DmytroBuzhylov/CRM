@@ -3,7 +3,8 @@ package http
 import (
 	"Test/internal/feature/inventory/interface_adapter/dto"
 	"Test/internal/feature/inventory/usecase"
-	"Test/internal/pkg/storage"
+	"Test/pkg/storage"
+	"Test/pkg/utils"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -36,6 +37,14 @@ func (h *InventoryHandler) CreateIngredientHandler(c *gin.Context) {
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to bind request: " + err.Error(),
+		})
+		return
+	}
+
+	err := utils.ValidateProductUnit(req.Unit)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}

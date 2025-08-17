@@ -4,9 +4,9 @@ CREATE TABLE IF NOT EXISTS menu_items
     organization_id uuid,
     name            varchar(255)             not null,
     description     text,
-    price           bigint,
+    price           NUMERIC(10, 2),
     category        varchar(255),
-    is_available    bool,
+    is_available    bool DEFAULT TRUE,
     updated_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

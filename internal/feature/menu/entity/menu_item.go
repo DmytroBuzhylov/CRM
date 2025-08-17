@@ -2,6 +2,7 @@ package entity
 
 import (
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -10,7 +11,7 @@ type MenuItem struct {
 	OrganizationID uuid.UUID
 	Name           string
 	Description    string
-	Price          uint64
+	Price          decimal.NullDecimal `db:"price"`
 	Category       string
 	IsAvailable    bool
 	UpdatedAt      time.Time

@@ -4,7 +4,7 @@ import (
 	"Test/internal/feature/organization/entity"
 	"Test/internal/feature/organization/interface_adapters/dto"
 	"Test/internal/feature/organization/repository"
-	"Test/internal/pkg/utils"
+	"Test/pkg/utils"
 	"context"
 	"time"
 )

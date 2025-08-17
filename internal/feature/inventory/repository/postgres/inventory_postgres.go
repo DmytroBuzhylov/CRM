@@ -127,26 +127,40 @@ func (r *PostgresInventoryRepository) Update(ctx context.Context, ingredient ent
 	argCount := 1
 
 	if ingredient.Name != "" {
+		if len(args) > 0 {
+			query += " AND"
+		}
 		query += fmt.Sprintf(" name = $%v", argCount)
 		args = append(args, ingredient.Name)
 		argCount++
 	}
 	if ingredient.Quantity > 0 {
+		if len(args) > 0 {
+			query += " AND"
+		}
 		query += fmt.Sprintf(" quantity = $%v", argCount)
 		args = append(args, ingredient.Quantity)
 		argCount++
 	}
 	if ingredient.MinimumQuantity > 0 {
+		if len(args) > 0 {
+			query += " AND"
+		}
 		query += fmt.Sprintf(" minimum_quantity = $%v", argCount)
 		args = append(args, ingredient.MinimumQuantity)
 		argCount++
 	}
 	if ingredient.Unit != "" {
+		if len(args) > 0 {
+			query += " AND"
+		}
 		query += fmt.Sprintf(" unit = $%v", argCount)
 		args = append(args, ingredient.Unit)
 		argCount++
 	}
-
+	if len(args) > 0 {
+		query += " AND"
+	}
 	query += fmt.Sprintf(" updated_at = $%v", argCount)
 	args = append(args, time.Now())
 	argCount++

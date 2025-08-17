@@ -6,7 +6,7 @@ import (
 	"Test/internal/feature/user/interface_adapters/dto"
 	"Test/internal/feature/user/repository"
 	"Test/internal/feature/user/repository/postgres"
-	"Test/internal/pkg/jwt"
+	"Test/pkg/jwt"
 	"context"
 	"database/sql"
 	"errors"
