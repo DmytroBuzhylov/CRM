@@ -4,7 +4,7 @@ import (
 	"Test/internal/feature/inventory/entity"
 	"Test/internal/feature/inventory/interface_adapter/dto"
 	"Test/internal/feature/inventory/repository"
-	"Test/internal/pkg/storage"
+	"Test/pkg/storage"
 	"context"
 	"database/sql"
 	"errors"
@@ -13,16 +13,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type inventoryUseCaseInteractor struct {
+type InventoryUseCaseInteractor struct {
 	repo    repository.InventoryRepository
 	storage storage.Storage
 }
 
-func NewInventoryUseCaseInteractor(repo repository.InventoryRepository, storage storage.Storage) *inventoryUseCaseInteractor {
-	return &inventoryUseCaseInteractor{repo: repo, storage: storage}
+func NewInventoryUseCaseInteractor(repo repository.InventoryRepository, storage storage.Storage) *InventoryUseCaseInteractor {
+	return &InventoryUseCaseInteractor{repo: repo, storage: storage}
 }
 
-func (uc *inventoryUseCaseInteractor) CreateIngredient(ctx context.Context, req dto.CreateIngredientRequest, fileOptions storage.StorageFileOptions) (dto.CreateIngredientResponse, error) {
+func (uc *InventoryUseCaseInteractor) CreateIngredient(ctx context.Context, req dto.CreateIngredientRequest, fileOptions storage.StorageFileOptions) (dto.CreateIngredientResponse, error) {
 	newID := uuid.New()
 	newIngredient := entity.Ingredient{
 		ID:              newID,
@@ -46,7 +46,7 @@ func (uc *inventoryUseCaseInteractor) CreateIngredient(ctx context.Context, req 
 	return dto.CreateIngredientResponse{Status: "ok"}, nil
 }
 
-func (uc *inventoryUseCaseInteractor) GetIngredient(ctx context.Context, req dto.GetIngredientRequest) (dto.GetIngredientResponse, error) {
+func (uc *InventoryUseCaseInteractor) GetIngredient(ctx context.Context, req dto.GetIngredientRequest) (dto.GetIngredientResponse, error) {
 	ingredient, err := uc.repo.Get(ctx, req.ID, req.OrganizationID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -68,7 +68,7 @@ func (uc *inventoryUseCaseInteractor) GetIngredient(ctx context.Context, req dto
 	}, nil
 }
 
-func (uc *inventoryUseCaseInteractor) GetAllIngredients(ctx context.Context, req dto.GetAllIngredientsRequest) ([]dto.GetIngredientResponse, error) {
+func (uc *InventoryUseCaseInteractor) GetAllIngredients(ctx context.Context, req dto.GetAllIngredientsRequest) ([]dto.GetIngredientResponse, error) {
 	ingredients, err := uc.repo.GetAll(ctx, req.OrganizationID)
 	if err != nil {
 		return []dto.GetIngredientResponse{}, nil
@@ -79,7 +79,7 @@ func (uc *inventoryUseCaseInteractor) GetAllIngredients(ctx context.Context, req
 	return []dto.GetIngredientResponse{}, nil
 }
 
-func (uc *inventoryUseCaseInteractor) DeleteIngredient(ctx context.Context, req dto.DeleteIngredientRequest) (dto.DeleteIngredientResponse, error) {
+func (uc *InventoryUseCaseInteractor) DeleteIngredient(ctx context.Context, req dto.DeleteIngredientRequest) (dto.DeleteIngredientResponse, error) {
 	err := uc.repo.Delete(ctx, req.ID, req.OrganizationID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -96,7 +96,7 @@ func (uc *inventoryUseCaseInteractor) DeleteIngredient(ctx context.Context, req 
 	return dto.DeleteIngredientResponse{Status: "ok"}, nil
 }
 
-func (uc *inventoryUseCaseInteractor) DeleteManyIngredients(ctx context.Context, req dto.DeleteManyIngredientsRequest) (dto.DeleteIngredientResponse, error) {
+func (uc *InventoryUseCaseInteractor) DeleteManyIngredients(ctx context.Context, req dto.DeleteManyIngredientsRequest) (dto.DeleteIngredientResponse, error) {
 	err := uc.repo.DeleteMany(ctx, req.IDs, req.OrganizationID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -115,7 +115,7 @@ func (uc *inventoryUseCaseInteractor) DeleteManyIngredients(ctx context.Context,
 	return dto.DeleteIngredientResponse{Status: "ok"}, nil
 }
 
-func (uc *inventoryUseCaseInteractor) UpdateIngredient(ctx context.Context, req dto.UpdateIngredientRequest) (dto.UpdateIngredientResponse, error) {
+func (uc *InventoryUseCaseInteractor) UpdateIngredient(ctx context.Context, req dto.UpdateIngredientRequest) (dto.UpdateIngredientResponse, error) {
 	ingredient := entity.Ingredient{
 		ID:              req.ID,
 		OrganizationID:  req.OrganizationID,

@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"Test/config"
-	"Test/internal/pkg/jwt"
+	"Test/pkg/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"strings"

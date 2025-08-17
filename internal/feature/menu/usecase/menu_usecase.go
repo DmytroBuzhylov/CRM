@@ -1,11 +1,14 @@
 package usecase
 
-import "context"
+import (
+	"Test/internal/feature/menu/interface_adapter/dto"
+	"context"
+)
 
 type MenuItemUseCase interface {
-	GetMenuItem(ctx context.Context)
-	GetOrganizationMenuItems(ctx context.Context)
-	CreateMenuItem(ctx context.Context)
-	UpdateMenuItem(ctx context.Context)
-	DeleteMenuItem(ctx context.Context)
+	CreateMenuItem(ctx context.Context, item *dto.MenuItemWithRecipeDTO) (*dto.CreateMenuItemResponse, error)
+	UpdateMenuItem(ctx context.Context, item *dto.MenuItemWithRecipeDTO) (*dto.UpdateMenuItemResponse, error)
+	DeleteMenuItem(ctx context.Context, request *dto.DeleteMenuItemRequest) (*dto.DeleteMenuItemResponse, error)
+	GetMenuItem(ctx context.Context, request *dto.GetMenuItemRequest) (*dto.MenuItemWithRecipeDTO, error)
+	GetAllMenuItems(ctx context.Context, request *dto.GetAllMenuItemsRequest) ([]*dto.MenuItemWithRecipeDTO, error)
 }

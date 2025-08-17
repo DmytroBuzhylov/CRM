@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"Test/internal/feature/inventory/interface_adapter/dto"
-	"Test/internal/pkg/storage"
+	"Test/pkg/storage"
 	"context"
 )
 
