@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS recipe_items
     updated_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
+    UNIQUE (menu_item_id, ingredient_id),
+
     FOREIGN KEY (menu_item_id) REFERENCES menu_items (id) ON DELETE CASCADE,
     FOREIGN KEY (ingredient_id) REFERENCES ingredients (id) ON DELETE CASCADE
 );
