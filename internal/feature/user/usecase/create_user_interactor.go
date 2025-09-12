@@ -57,7 +57,7 @@ func (i *createUserInteractor) Create(ctx context.Context, req dto.CreateUserReq
 	err = i.userRepo.SaveRefreshToken(ctx, user.ID, newRefreshToken, time.Now().Add(i.jwtConfig.JWTRefreshLifetime))
 	if err != nil {
 		_ = i.userRepo.DeleteUser(ctx, user.ID)
-		return dto.CreateUserResponse{}, err
+		return dto.CreateUserResponse{}, errors.New("error save jwt tokens")
 	}
 
 	return dto.CreateUserResponse{

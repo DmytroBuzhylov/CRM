@@ -41,13 +41,13 @@ type GetAllMenuItemsRequest struct {
 	OrganizationID uuid.UUID `json:"-"`
 }
 
-type UpdateMenuItemRequest struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Price       float64   `json:"price"`
-	Category    string    `json:"category"`
-	Description string    `json:"description"`
-}
+//type UpdateMenuItemRequest struct {
+//	ID          uuid.UUID `json:"id"`
+//	Name        string    `json:"name"`
+//	Price       float64   `json:"price"`
+//	Category    string    `json:"category"`
+//	Description string    `json:"description"`
+//}
 
 type UpdateMenuItemResponse struct {
 	Status string `json:"status"`

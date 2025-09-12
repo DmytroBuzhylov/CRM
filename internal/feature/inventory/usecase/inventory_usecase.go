@@ -7,7 +7,7 @@ import (
 )
 
 type InventoryUseCase interface {
-	CreateIngredient(ctx context.Context, req dto.CreateIngredientRequest, fileOptions storage.StorageFileOptions) (dto.CreateIngredientResponse, error)
+	CreateIngredient(ctx context.Context, req dto.CreateIngredientRequest, fileOptions *storage.StorageFileOptions) (dto.CreateIngredientResponse, error)
 	GetIngredient(ctx context.Context, req dto.GetIngredientRequest) (dto.GetIngredientResponse, error)
 	GetAllIngredients(ctx context.Context, req dto.GetAllIngredientsRequest) ([]dto.GetIngredientResponse, error)
 	DeleteIngredient(ctx context.Context, req dto.DeleteIngredientRequest) (dto.DeleteIngredientResponse, error)

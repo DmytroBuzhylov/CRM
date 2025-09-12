@@ -9,8 +9,8 @@ type CreateIngredientRequest struct {
 	OrganizationID  uuid.UUID `json:"-"`
 	Name            string    `json:"name" binding:"required"`
 	Unit            string    `json:"unit" binding:"required"`
-	Quantity        uint64    `json:"quantity" binding:"required"`
-	MinimumQuantity uint64    `json:"minimum_quantity" binding:"required"`
+	Quantity        float64   `json:"quantity" binding:"required"`
+	MinimumQuantity float64   `json:"minimum_quantity" binding:"required"`
 }
 
 type CreateIngredientResponse struct {
