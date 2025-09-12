@@ -3,7 +3,6 @@ package http
 import (
 	"Test/internal/feature/inventory/interface_adapter/dto"
 	"Test/internal/feature/inventory/usecase"
-	"Test/pkg/storage"
 	"Test/pkg/utils"
 	"context"
 	"github.com/gin-gonic/gin"
@@ -41,14 +40,6 @@ func (h *InventoryHandler) CreateIngredientHandler(c *gin.Context) {
 		return
 	}
 
-	err := utils.ValidateProductUnit(req.Unit)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	file, fileHeader, err := c.Request.FormFile("image")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -57,37 +48,13 @@ func (h *InventoryHandler) CreateIngredientHandler(c *gin.Context) {
 		return
 	}
 	defer file.Close()
-	if fileHeader.Size > 2*1024*1024 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "File is too large. Max size is 2MB",
-		})
-		return
-	}
 
-	buffer := make([]byte, 512)
-	_, err = file.Read(buffer)
+	fileOpts, err := utils.FileVerifier(file, fileHeader)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to read file buffer",
-		})
-		return
-	}
-
-	file.Seek(0, 0)
-
-	contentType := http.DetectContentType(buffer)
-	if contentType != "image/jpeg" && contentType != "image/png" && contentType != "image/gif" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Unsupported file type. Only JPEG, PNG, and GIF are allowed",
+			"error": err.Error(),
 		})
 		return
-
-	}
-
-	fileOpts := storage.StorageFileOptions{
-		File:        file,
-		FileSize:    fileHeader.Size,
-		ContentType: contentType,
 	}
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)

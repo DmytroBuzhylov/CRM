@@ -57,7 +57,7 @@ func (i *getUserInteractor) Login(ctx context.Context, req dto.LoginRequest) (dt
 	}
 
 	if err != nil {
-		return dto.LoginResponse{Status: "db error"}, err
+		return dto.LoginResponse{Status: "db error"}, errors.New("could not find username or phone or email")
 	}
 	if !postgres.CheckPasswordHash(req.Password, user.HashedPassword) {
 		return dto.LoginResponse{Status: "incorrect password"}, errors.New("invalid password")
@@ -68,19 +68,19 @@ func (i *getUserInteractor) Login(ctx context.Context, req dto.LoginRequest) (dt
 		if errors.Is(err, sql.ErrNoRows) {
 			organizationID = uuid.Nil
 		} else {
-			return dto.LoginResponse{Status: "db error"}, err
+			return dto.LoginResponse{Status: "db error"}, errors.New("could not be found organization_id")
 		}
 	}
 
 	accessToken, refreshToken, err := jwt.GenerateTokens(user.ID, user.Role, organizationID, i.jwtConfig.JWTAccessSecret, i.jwtConfig.JWTRefreshSecret, i.jwtConfig.JWTAccessLifetime, i.jwtConfig.JWTRefreshLifetime)
 	if err != nil {
-		return dto.LoginResponse{Status: "JWT generation error"}, err
+		return dto.LoginResponse{Status: "JWT generation error"}, errors.New("JWT generation error")
 	}
 
 	err = i.userRepo.SaveRefreshToken(ctx, user.ID, refreshToken, time.Now().Add(i.jwtConfig.JWTRefreshLifetime))
 	if err != nil {
 		log.Warn().Err(err).Send()
-		return dto.LoginResponse{}, err
+		return dto.LoginResponse{}, errors.New("failed to save refresh token")
 	}
 
 	return dto.LoginResponse{

@@ -5,6 +5,7 @@ import (
 	"Test/internal/feature/inventory/interface_adapter/dto"
 	"Test/internal/feature/inventory/repository"
 	"Test/pkg/storage"
+	"Test/pkg/utils"
 	"context"
 	"database/sql"
 	"errors"
@@ -22,17 +23,29 @@ func NewInventoryUseCaseInteractor(repo repository.InventoryRepository, storage 
 	return &InventoryUseCaseInteractor{repo: repo, storage: storage}
 }
 
-func (uc *InventoryUseCaseInteractor) CreateIngredient(ctx context.Context, req dto.CreateIngredientRequest, fileOptions storage.StorageFileOptions) (dto.CreateIngredientResponse, error) {
+func (uc *InventoryUseCaseInteractor) CreateIngredient(ctx context.Context, req dto.CreateIngredientRequest, fileOptions *storage.StorageFileOptions) (dto.CreateIngredientResponse, error) {
+	var err error
 	newID := uuid.New()
 	newIngredient := entity.Ingredient{
-		ID:              newID,
-		OrganizationID:  req.OrganizationID,
-		Name:            req.Name,
-		Unit:            req.Unit,
-		Quantity:        req.Quantity,
-		MinimumQuantity: req.MinimumQuantity,
+		ID:             newID,
+		OrganizationID: req.OrganizationID,
+		Name:           req.Name,
+		//Unit:            req.Unit,
+		//Quantity:        req.Quantity,
+		//MinimumQuantity: req.MinimumQuantity,
 	}
-	err := uc.storage.UploadFile(ctx, newID.String(), fileOptions.File, fileOptions.FileSize, fileOptions.ContentType)
+
+	newIngredient.Quantity, newIngredient.Unit, err = utils.NormalizeUnit(req.Quantity, req.Unit)
+	if err != nil {
+		return dto.CreateIngredientResponse{}, errors.New("failed to validate unit ingredient")
+	}
+
+	newIngredient.MinimumQuantity, _, err = utils.NormalizeUnit(req.MinimumQuantity, req.Unit)
+	if err != nil {
+		return dto.CreateIngredientResponse{}, errors.New("failed to validate unit ingredient")
+	}
+
+	err = uc.storage.UploadFile(ctx, newID.String(), fileOptions.File, fileOptions.FileSize, fileOptions.ContentType)
 	if err != nil {
 		return dto.CreateIngredientResponse{}, errors.New("failed to save ingredient image")
 	}

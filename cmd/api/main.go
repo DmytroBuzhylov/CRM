@@ -5,6 +5,9 @@ import (
 	http4 "Test/internal/feature/inventory/delivery/http"
 	postgres4 "Test/internal/feature/inventory/repository/postgres"
 	usecase4 "Test/internal/feature/inventory/usecase"
+	http5 "Test/internal/feature/menu/delivery/http"
+	postgres5 "Test/internal/feature/menu/repository/postgres"
+	usecase5 "Test/internal/feature/menu/usecase"
 	http3 "Test/internal/feature/organization/delivery/http"
 	postgres3 "Test/internal/feature/organization/repository/postgres"
 	usecase3 "Test/internal/feature/organization/usecase"
@@ -20,6 +23,7 @@ import (
 	"Test/pkg/storage"
 	"context"
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
@@ -75,6 +79,10 @@ func main() {
 	inventoryUC := usecase4.NewInventoryUseCaseInteractor(inventoryRepo, minioS3)
 	inventoryHandler := http4.NewInventoryHandler(inventoryUC)
 
+	menuRepo := postgres5.NewPostgresMenuRepository(dbPool)
+	menuUC := usecase5.NewMenuUseCaseInteractor(menuRepo, minioS3)
+	menuHandler := http5.NewMenuHandler(menuUC)
+
 	if cfg.Log.Production {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -82,6 +90,16 @@ func main() {
 	//router.Use(taskHTTP.RequestLoggerMiddleware())
 	router.Use(gin.Recovery())
 	//router.Use(taskHTTP.ErrorHandlerMiddleware())
+
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length", "X-Request-ID"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+	router.Use(cors.New(corsConfig))
 
 	apiV1 := router.Group("/api/v1")
 	{
@@ -107,6 +125,13 @@ func main() {
 			ingredientAPI.PUT("/", inventoryHandler.UpdateIngredientHandler)
 			ingredientAPI.DELETE("/:id", inventoryHandler.DeleteIngredientHandler)
 			ingredientAPI.DELETE("/", inventoryHandler.DeleteManyIngredientsHandler)
+		}
+
+		menuAPI := apiV1.Group("/organization/menu").Use(authMiddleware.JWTMiddleware())
+		{
+			menuAPI.GET("/:id")
+			menuAPI.PUT("/update", menuHandler.UpdateMenuItemHandler)
+			menuAPI.POST("/create", menuHandler.CreateMenuItemHandler)
 		}
 
 		tasksAPI := apiV1.Group("/tasks").Use(authMiddleware.JWTMiddleware())

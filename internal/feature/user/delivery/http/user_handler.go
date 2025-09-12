@@ -51,7 +51,7 @@ func (h *AuthHandler) CreateUser(c *gin.Context) {
 	resp, err := h.createUserUC.Create(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "server error",
+			"error": err.Error(),
 		})
 		log.Warn().Err(err).Send()
 		return
@@ -139,7 +139,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	resp, err := h.getUserUC.Login(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "server error",
+			"error": err.Error(),
 		})
 		return
 	}

@@ -7,7 +7,7 @@ type CreateUserRequest struct {
 	Username string `json:"username" binding:"required,min=3"`
 	Password string `json:"password" binding:"required,min=8"`
 	Email    string `json:"email" binding:"required,email"`
-	Phone    string `json:"phone" binding:"required,startswith=+380,len=13"`
+	Phone    string `json:"phone" binding:"required,startswith=0,len=10"`
 }
 
 type CreateUserResponse struct {

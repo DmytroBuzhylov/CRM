@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
@@ -35,9 +36,18 @@ func (r *PostgresUserRepository) Create(ctx context.Context, user entity.User) e
 		user.CreatedAt,
 	)
 
-	if err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
+	if pgErr, ok := err.(*pgconn.PgError); ok {
+		log.Warn().Err(err).Msg("PostgresUserRepository@Create")
+		switch pgErr.Code {
+		case "23505":
+			return fmt.Errorf("user with such username/email already exists")
+		case "23503":
+			return fmt.Errorf("foreign key violation")
+		default:
+			return fmt.Errorf("database error")
+		}
 	}
+
 	return nil
 }
 
