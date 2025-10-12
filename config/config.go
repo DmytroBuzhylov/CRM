@@ -12,6 +12,8 @@ type AppConfig struct {
 	Log      LogConfig
 	JWT      JWTConfig
 	Minio    MinioConfig
+	Redis    RedisConfig
+	Email    EmailConfig
 }
 
 type ServerConfig struct {
@@ -47,6 +49,20 @@ type MinioConfig struct {
 	AccessKeyId     string `mapstructure:"access_key_id"`
 	SecretAccessKey string `mapstructure:"secret_access_key"`
 	SSL             bool   `mapstructure:"ssl"`
+}
+
+type RedisConfig struct {
+	Addr     string `mapstructure:"addr"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
+}
+
+type EmailConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	From     string `mapstructure:"from"`
 }
 
 func LoadConfig() (config AppConfig, err error) {

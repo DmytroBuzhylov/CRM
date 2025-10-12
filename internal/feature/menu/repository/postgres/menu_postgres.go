@@ -201,7 +201,8 @@ func (r *PostgresMenuTransactionalRepository) AddRecipeItem(ctx context.Context,
 func (r *PostgresMenuTransactionalRepository) AddRecipeItems(ctx context.Context, recipeItems []entity.RecipeItem) error {
 	batch := &pgx.Batch{}
 	for _, i := range recipeItems {
-		batch.Queue(`INSERT INTO recipe_items (menu_item_id, ingredient_id, quantity_needed, unit_of_measure, updated_at, created_at) VALUES ($1, $2, $3, $4, $5, $6)`,
+		batch.Queue(`INSERT INTO recipe_items (id, menu_item_id, ingredient_id, quantity_needed, unit_of_measure, updated_at, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			&i.ID,
 			&i.MenuItemID,
 			&i.IngredientID,
 			&i.QuantityNeeded,
@@ -305,7 +306,7 @@ func (r *PostgresMenuTransactionalRepository) DecreaseInventory(ctx context.Cont
 		return err
 	}
 
-	query = `SELECT id, unit, quantity FROM ingredients WHERE id = ANY($1) AND organization_id = $2`
+	query = `SELECT id, unit, quantity FROM ingredients WHERE id = ANY($1)`
 	rows, err = r.tx.Query(ctx, query, recipeItemsIDs)
 	if err != nil {
 		return err

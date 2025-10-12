@@ -2,7 +2,16 @@ package entity
 
 import (
 	"github.com/google/uuid"
+	"github.com/maniartech/signals"
 	"time"
+)
+
+var (
+	UserCreated       = signals.New[User]()
+	UserRegistered    = signals.New[User]()
+	UserTryingToLogin = signals.New[User]()
+	UserLoggedIn      = signals.New[User]()
+	UserUpdated       = signals.New[User]()
 )
 
 type User struct {

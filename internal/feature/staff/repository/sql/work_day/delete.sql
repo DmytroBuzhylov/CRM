@@ -1,0 +1,1 @@
+DELETE FROM work_days WHERE id = $1

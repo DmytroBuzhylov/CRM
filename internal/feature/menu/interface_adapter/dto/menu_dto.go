@@ -1,27 +1,48 @@
 package dto
 
 import (
-	"Test/internal/feature/menu/entity"
 	"github.com/google/uuid"
 	"time"
 )
 
 type MenuItemWithRecipeDTO struct {
-	MenuItem    entity.MenuItem
-	RecipeItems []entity.RecipeItem
+	MenuItem    *MenuItemRequest     `json:"menu_item"`
+	RecipeItems []*RecipeItemRequest `json:"recipe_items"`
+}
+
+type MenuItemRequest struct {
+	ID             uuid.UUID `json:"id,omitempty"`
+	OrganizationID uuid.UUID `json:"organization_id,omitempty"`
+	Name           string    `json:"name" binding:"required,min=8"`
+	Description    string    `json:"description" binding:"required"`
+	Price          string    `json:"price" binding:"required"`
+	Category       string    `json:"category" binding:"required"`
+	IsAvailable    bool      `json:"is_available,omitempty"`
+	UpdatedAt      time.Time `json:"updated_at,omitempty"`
+	CreatedAt      time.Time `json:"created_at,omitempty"`
+}
+
+type RecipeItemRequest struct {
+	ID             uuid.UUID `json:"id,omitempty"`
+	MenuItemID     uuid.UUID `json:"menu_item_id,omitempty"`
+	IngredientID   uuid.UUID `json:"ingredient_id"`
+	QuantityNeeded uint64    `json:"quantity_needed" binding:"required"`
+	UnitOfMeasure  string    `json:"unit_of_measure" binding:"required"`
+	UpdatedAt      time.Time `json:"updated_at,omitempty"`
+	CreatedAt      time.Time `json:"created_at,omitempty"`
 }
 
 type CreateMenuItemRequest struct {
 	OrganizationID uuid.UUID `json:"-"`
 	Name           string    `json:"name"`
 	Description    string    `json:"description"`
-	Price          float64   `json:"price"`
+	Price          string    `json:"price"`
 	Category       string    `json:"category"`
 }
 
-type CreateMenuItemResponse struct {
-	Status string `json:"status"`
-}
+//type CreateMenuItemResponse struct {
+//	Status string `json:"status"`
+//}
 
 type GetMenuItemRequest struct {
 	ID uuid.UUID `json:"id"`
@@ -30,7 +51,7 @@ type GetMenuItemRequest struct {
 type GetMenuItemResponse struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
-	Price       float64   `json:"price"`
+	Price       string    `json:"price"`
 	Category    string    `json:"category"`
 	IsAvailable bool      `json:"is_available"`
 	UpdatedAt   time.Time `json:"updated_at"`

@@ -7,6 +7,16 @@ import (
 	"time"
 )
 
+type TaskRepository interface {
+	Create(ctx context.Context, task entity.Task) (entity.Task, error)
+	Get(ctx context.Context, id uuid.UUID) (entity.Task, error)
+	GetTasks(ctx context.Context, filter TaskFilter, pagination Pagination) ([]entity.Task, error)
+	Update(ctx context.Context, task entity.Task) (entity.Task, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
+	UpdateDeadline(ctx context.Context, id uuid.UUID, deadline time.Time) error
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
 type TaskCreator interface {
 	Create(ctx context.Context, task entity.Task) (entity.Task, error)
 }

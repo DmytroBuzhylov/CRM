@@ -7,7 +7,7 @@ import (
 )
 
 type MenuItemUseCase interface {
-	CreateMenuItem(ctx context.Context, item *dto.MenuItemWithRecipeDTO, fileOpts *storage.StorageFileOptions) (*dto.CreateMenuItemResponse, error)
+	CreateMenuItem(ctx context.Context, item *dto.MenuItemWithRecipeDTO, fileOpts *storage.StorageFileOptions) error
 	UpdateMenuItem(ctx context.Context, item *dto.MenuItemWithRecipeDTO) (*dto.UpdateMenuItemResponse, error)
 	DeleteMenuItem(ctx context.Context, request *dto.DeleteMenuItemRequest) (*dto.DeleteMenuItemResponse, error)
 	GetMenuItem(ctx context.Context, request *dto.GetMenuItemRequest) (*dto.MenuItemWithRecipeDTO, error)

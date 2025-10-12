@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS ingredients
     unit             VARCHAR(255) NOT NULL,
     quantity         bigint,
     minimum_quantity bigint,
-    created_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at       TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at       TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
 
     FOREIGN KEY (organization_id) REFERENCES organizations (id) ON DELETE CASCADE

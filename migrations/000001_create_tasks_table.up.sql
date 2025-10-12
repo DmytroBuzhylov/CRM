@@ -9,6 +9,6 @@ CREATE TABLE IF NOT EXISTS tasks
     assignee_id     uuid                     NULL,
     client_id       uuid                     NULL,
     organization_id uuid,
-    created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );

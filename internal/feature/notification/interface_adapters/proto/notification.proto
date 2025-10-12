@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package notification;
+
+option go_package = "internal/feature/notification/interface_adapters/proto/gen";
+
+enum NotificationType {
+  NOTIFICATION_TYPE_UNSPECIFIED = 0;
+
+  NOTIFICATION_TYPE_ORDER = 1;
+  NOTIFICATION_TYPE_TASK = 2;
+  NOTIFICATION_TYPE_SYSTEM = 3;
+
+  NOTIFICATION_TYPE_CLIENT_REQUEST = 4;
+
+  NOTIFICATION_TYPE_SHIFT_STARTED = 5;
+  NOTIFICATION_TYPE_SHIFT_ENDED = 6;
+  NOTIFICATION_TYPE_SHIFT_OVERDUE = 7;
+
+  NOTIFICATION_TYPE_FOOD_READY = 8;
+
+  NOTIFICATION_TYPE_INCIDENT = 9;
+  NOTIFICATION_TYPE_EQUIPMENT_ALERT = 10;
+
+  NOTIFICATION_TYPE_SCREEN_MESSAGE = 11;
+  NOTIFICATION_TYPE_MANAGER_ALERT = 12;
+}
+
+enum ResourceType {
+  RESOURCE_TYPE_UNSPECIFIED = 0;
+  RESOURCE_TYPE_ORDER = 1;
+  RESOURCE_TYPE_TASK = 2;
+  RESOURCE_TYPE_TABLE = 3;
+  RESOURCE_TYPE_INVENTORY = 4;
+  RESOURCE_TYPE_MENU_ITEM = 5;
+  RESOURCE_TYPE_SHIFT = 6;
+  RESOURCE_TYPE_EMPLOYEE = 7;
+  RESOURCE_TYPE_KITCHEN_STATION = 8;
+  RESOURCE_TYPE_INCIDENT = 9;
+}
+
+message Notification {
+  string id = 1;
+  string organization_id = 2;
+  string user_id = 3;
+
+  NotificationType type = 4;
+  string text = 5;
+  bool viewed = 6;
+
+  optional string related_resource_id = 7;
+  optional ResourceType resource_type = 8;
+
+  int64 created_at = 9;
+}
+
+message MarkAsReadRequest {
+  string notification_id = 1;
+  bool viewed = 2;
+}
+
+
+
+message CreateNotificationRequest {
+  string organization_id = 1;
+  string user_id = 2;
+
+  NotificationType type = 4;
+  string text = 5;
+
+  optional string related_resource_id = 6;
+  optional ResourceType resource_type = 7;
+
+  bool send_to_email = 8;
+  bool send_to_app = 9;
+}
+
+//From Client to Server
+message ClientMessage {
+  oneof payload {
+    MarkAsReadRequest mark_as_read = 1;
+    CreateNotificationRequest create = 2;
+  }
+}
+
+//From Server to Client
+message ServerMessage {
+  oneof payload {
+    Notification notification = 1;
+  }
+}

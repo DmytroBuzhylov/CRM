@@ -13,24 +13,13 @@ import (
 )
 
 type TaskHandler struct {
-	createTaskUC usecase.CreateTask
-	getTaskUC    usecase.GetTask
-	updateTaskUC usecase.UpdateTask
-	deleteTaskUC usecase.DeleteTask
+	taskUC usecase.TaskUseCase
 }
 
-func NewTaskHandler(
-	createTaskUC usecase.CreateTask,
-	getTaskUC usecase.GetTask,
-	updateTaskUC usecase.UpdateTask,
-	deleteTaskUC usecase.DeleteTask,
-) *TaskHandler {
+func NewTaskHandler(taskUC usecase.TaskUseCase) *TaskHandler {
 
 	return &TaskHandler{
-		createTaskUC: createTaskUC,
-		getTaskUC:    getTaskUC,
-		updateTaskUC: updateTaskUC,
-		deleteTaskUC: deleteTaskUC,
+		taskUC: taskUC,
 	}
 }
 
@@ -51,7 +40,7 @@ func (h *TaskHandler) CreateTask(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	response, err := h.createTaskUC.Create(ctx, req)
+	response, err := h.taskUC.Create(ctx, req)
 	if err != nil {
 		log.Info().Err(err).Send()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
@@ -72,7 +61,7 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 	defer cancel()
 
 	req := dto.GetTaskRequest{ID: id}
-	response, err := h.getTaskUC.Get(ctx, req)
+	response, err := h.taskUC.Get(ctx, req)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
@@ -97,7 +86,7 @@ func (h *TaskHandler) GetTasks(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	response, err := h.getTaskUC.GetTasks(ctx, req)
+	response, err := h.taskUC.GetTasks(ctx, req)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
@@ -117,7 +106,7 @@ func (h *TaskHandler) UpdateTaskStatus(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	response, err := h.updateTaskUC.UpdateStatus(ctx, req)
+	response, err := h.taskUC.UpdateStatus(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
@@ -137,7 +126,7 @@ func (h *TaskHandler) UpdateTaskDeadline(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	response, err := h.updateTaskUC.UpdateDeadline(ctx, req)
+	response, err := h.taskUC.UpdateDeadline(ctx, req)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
@@ -157,7 +146,7 @@ func (h *TaskHandler) UpdateTask(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	response, err := h.updateTaskUC.Update(ctx, req)
+	response, err := h.taskUC.Update(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
@@ -181,7 +170,7 @@ func (h *TaskHandler) DeleteTask(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	response, err := h.deleteTaskUC.Delete(ctx, req)
+	response, err := h.taskUC.Delete(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return

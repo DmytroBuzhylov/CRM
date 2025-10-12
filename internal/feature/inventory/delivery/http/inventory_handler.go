@@ -3,11 +3,14 @@ package http
 import (
 	"Test/internal/feature/inventory/interface_adapter/dto"
 	"Test/internal/feature/inventory/usecase"
+	"Test/pkg/storage"
 	"Test/pkg/utils"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"mime/multipart"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -40,32 +43,48 @@ func (h *InventoryHandler) CreateIngredientHandler(c *gin.Context) {
 		return
 	}
 
-	file, fileHeader, err := c.Request.FormFile("image")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to get file: " + err.Error(),
-		})
-		return
-	}
-	defer file.Close()
-
-	fileOpts, err := utils.FileVerifier(file, fileHeader)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
 
-	resp, err := h.inventoryUseCase.CreateIngredient(ctx, req, fileOpts)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
+	var (
+		file       multipart.File
+		fileHeader *multipart.FileHeader
+		err        error
+		fileOpts   *storage.StorageFileOptions
+		resp       dto.CreateIngredientResponse
+	)
+	if strings.HasPrefix(c.Request.Header.Get("Content-Type"), "multipart/form-data") {
+		file, fileHeader, err = c.Request.FormFile("image")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Failed to get file: " + err.Error(),
+			})
+			return
+		}
+		defer file.Close()
+
+		fileOpts, err = utils.FileVerifier(file, fileHeader)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		resp, err = h.inventoryUseCase.CreateIngredientWithFile(ctx, req, fileOpts)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+	} else {
+		resp, err = h.inventoryUseCase.CreateIngredient(ctx, req)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
 	}
 
 	c.JSON(http.StatusCreated, gin.H{

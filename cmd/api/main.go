@@ -8,9 +8,21 @@ import (
 	http5 "Test/internal/feature/menu/delivery/http"
 	postgres5 "Test/internal/feature/menu/repository/postgres"
 	usecase5 "Test/internal/feature/menu/usecase"
+	http8 "Test/internal/feature/notification/delivery/http"
+	"Test/internal/feature/notification/delivery/ws"
+	"Test/internal/feature/notification/interface_adapters/email_sender"
+	listener2 "Test/internal/feature/notification/interface_adapters/event_listener/signal"
+	postgres8 "Test/internal/feature/notification/repository/postgres"
+	usecase8 "Test/internal/feature/notification/usecase"
+	http7 "Test/internal/feature/order/delivery/http"
+	postgres7 "Test/internal/feature/order/repository/postgres"
+	usecase7 "Test/internal/feature/order/usecase"
 	http3 "Test/internal/feature/organization/delivery/http"
 	postgres3 "Test/internal/feature/organization/repository/postgres"
 	usecase3 "Test/internal/feature/organization/usecase"
+	http6 "Test/internal/feature/table/delivery/http"
+	postgres6 "Test/internal/feature/table/repository/postgres"
+	usecase6 "Test/internal/feature/table/usecase"
 	taskHTTP "Test/internal/feature/task/delivery/http"
 	"Test/internal/feature/task/repository/postgres"
 	"Test/internal/feature/task/usecase"
@@ -21,10 +33,13 @@ import (
 	"Test/pkg/db"
 	"Test/pkg/logger"
 	"Test/pkg/storage"
+	"Test/pkg/store"
 	"context"
 	"fmt"
+	"github.com/DmytroBuzhylov/ratelimiter"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"net/http"
@@ -55,18 +70,26 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to initialize minioS3")
 	}
 
+	redis, err := db.NewClient(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize redis client")
+	}
+
 	taskRepo := postgres.NewTaskRepository(dbPool)
-	createTaskUC := usecase.NewCreateTaskInteractor(taskRepo)
-	getTaskUC := usecase.NewGetTaskInteractor(taskRepo)
-	updateTaskUC := usecase.NewUpdateTaskInteractor(taskRepo)
-	deleteTaskUC := usecase.NewDeleteTaskInteractor(taskRepo)
-	taskHandler := taskHTTP.NewTaskHandler(createTaskUC, getTaskUC, updateTaskUC, deleteTaskUC)
+	taskUC := usecase.NewTaskUseCaseInteractor(taskRepo)
+	taskHandler := taskHTTP.NewTaskHandler(taskUC)
 
 	userRepo := postgres2.NewPostgresUserRepository(dbPool)
-	createUserUC := usecase2.NewCreateUserInteractor(userRepo, cfg.JWT)
-	getUserUC := usecase2.NewGetUserInteractor(userRepo, cfg.JWT)
-	authHandler := http2.NewUserHandler(createUserUC, getUserUC, cfg.JWT)
-	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT)
+	redisClient := store.NewRedisClient(redis)
+	userUC := usecase2.NewUserUseCaseInteractor(userRepo, cfg.JWT, redisClient)
+
+	authHandler := http2.NewUserHandler(userUC, cfg.JWT)
+	limiter := ratelimiter.NewRedisTokenBucket(redis, &ratelimiter.BucketOptions{
+		BucketSize: 60,
+		RefillRate: 0.5,
+		TTL:        500 * time.Second,
+	})
+	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT, limiter)
 
 	invitationRepo := postgres3.NewPostgresInvitationRepository(dbPool)
 	invitationUC := usecase3.NewInvitationUseCaseInteractor(invitationRepo)
@@ -83,11 +106,33 @@ func main() {
 	menuUC := usecase5.NewMenuUseCaseInteractor(menuRepo, minioS3)
 	menuHandler := http5.NewMenuHandler(menuUC)
 
+	tableRepo := postgres6.NewPostgresTableRepository(dbPool)
+	tableUC := usecase6.NewTableUseCaseInteractor(tableRepo)
+	tableHandler := http6.NewTableHandler(tableUC)
+
+	orderRepo := postgres7.NewPostgresOrderRepository(dbPool)
+	orderUC := usecase7.NewOrderUseCaseInteractor(orderRepo)
+	orderHandler := http7.NewOrderHandler(orderUC)
+
+	sender := email_sender.NewMailService(cfg.Email.Host, cfg.Email.Port, cfg.Email.Username, cfg.Email.Password, cfg.Email.From)
+	notifyRepo := postgres8.NewPostgresNotificationRepository(dbPool)
+	notifyUC := usecase8.NewNotificationUseCaseInteractor(notifyRepo, userRepo, sender)
+	eventLister := listener2.NewTaskListenerInteractor(notifyUC)
+
+	notifyHTTPHandler := http8.NewNotificationHTTPHandler(notifyUC)
+	notificationWSHandler := ws.NewNotificationWSHandler(websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}, eventLister)
+
 	if cfg.Log.Production {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	router := gin.New()
-	//router.Use(taskHTTP.RequestLoggerMiddleware())
+	router.Use(authMiddleware.RateLimiter())
 	router.Use(gin.Recovery())
 	//router.Use(taskHTTP.ErrorHandlerMiddleware())
 
@@ -105,9 +150,15 @@ func main() {
 	{
 		authAPI := apiV1.Group("/auth")
 		{
-			authAPI.POST("/create", authHandler.CreateUser)
+			authAPI.POST("/create", authHandler.Register)
 			authAPI.POST("/login", authHandler.Login)
 			authAPI.POST("/refresh", authHandler.Refresh)
+		}
+
+		notifyApi := apiV1.Group("/notify").Use(authMiddleware.JWTMiddleware())
+		{
+			notifyApi.GET("/ws", notificationWSHandler.NotificationWSHandler)
+			notifyApi.GET("/", notifyHTTPHandler.GetUserNotifications)
 		}
 
 		organizationAPI := apiV1.Group("/organization").Use(authMiddleware.JWTMiddleware())
@@ -134,9 +185,20 @@ func main() {
 			menuAPI.POST("/create", menuHandler.CreateMenuItemHandler)
 		}
 
+		tableAPI := apiV1.Group("/organization/table").Use(authMiddleware.JWTMiddleware())
+		{
+			tableAPI.POST("/create", tableHandler.CreateTableHandler)
+		}
+
+		orderAPI := apiV1.Group("/organization/order").Use(authMiddleware.JWTMiddleware())
+		{
+			orderAPI.GET("/:id", orderHandler.GetOrderHandler)
+			orderAPI.GET("/", orderHandler.GetOrganizationsOrdersHandler)
+			orderAPI.POST("/create", orderHandler.CreateOrderHandler)
+		}
+
 		tasksAPI := apiV1.Group("/tasks").Use(authMiddleware.JWTMiddleware())
 		{
-			tasksAPI.Use(authMiddleware.JWTMiddleware())
 			tasksAPI.POST("/", taskHandler.CreateTask)
 			tasksAPI.GET("/:id", taskHandler.GetTask)
 			tasksAPI.GET("/", taskHandler.GetTasks)
@@ -147,14 +209,6 @@ func main() {
 		}
 
 	}
-
-	router.GET("/healthz", func(c *gin.Context) {
-		if err := dbPool.Ping(c.Request.Context()); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"status": "unhealthy", "database_error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
-	})
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,

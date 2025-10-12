@@ -13,30 +13,21 @@ import (
 )
 
 type AuthHandler struct {
-	createUserUC usecase.CreateUser
-	getUserUC    usecase.GetUser
-	updateUserUC usecase.UpdateUser
-	deleteUserUC usecase.DeleteUser
-	jwtConfig    config.JWTConfig
+	uc        usecase.UserUseCase
+	jwtConfig config.JWTConfig
 }
 
 func NewUserHandler(
-	createUserUC usecase.CreateUser,
-	getUserUC usecase.GetUser,
-	//updateUserUC usecase.UpdateUser,
-	//deleteUserUC usecase.DeleteUser,
+	uc usecase.UserUseCase,
 	jwtConfig config.JWTConfig,
 ) *AuthHandler {
 	return &AuthHandler{
-		createUserUC: createUserUC,
-		getUserUC:    getUserUC,
-		//updateUserUC: updateUserUC,
-		//deleteUserUC: deleteUserUC,
+		uc:        uc,
 		jwtConfig: jwtConfig,
 	}
 }
 
-func (h *AuthHandler) CreateUser(c *gin.Context) {
+func (h *AuthHandler) Register(c *gin.Context) {
 	var req dto.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -48,7 +39,7 @@ func (h *AuthHandler) CreateUser(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	resp, err := h.createUserUC.Create(ctx, req)
+	resp, err := h.uc.Create(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -88,7 +79,7 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
 
-	newAccessToken, newRefreshToken, err := h.getUserUC.Refresh(ctx, refreshTokenString)
+	newAccessToken, newRefreshToken, err := h.uc.Refresh(ctx, refreshTokenString)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": fmt.Sprintf("Unauthorized: %v", err.Error())})
 		return
@@ -136,7 +127,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	resp, err := h.getUserUC.Login(ctx, req)
+	resp, err := h.uc.Login(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -159,4 +150,25 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		"token_type":   "Bearer",
 		"expires_in":   int(h.jwtConfig.JWTAccessLifetime.Seconds()),
 	})
+}
+
+func (h *AuthHandler) VerifyEmail(c *gin.Context) {
+	var req dto.VerifyEmailRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	//ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	//defer cancel()
+	//
+	//err := h.getUserUC.
+
+}
+
+func (h *AuthHandler) Login2FA(c *gin.Context) {
+
 }

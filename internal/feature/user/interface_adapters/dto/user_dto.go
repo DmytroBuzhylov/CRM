@@ -64,3 +64,8 @@ type DeleteUserRequest struct {
 type DeleteUserResponse struct {
 	Status bool `json:"status"`
 }
+
+type VerifyEmailRequest struct {
+	Email string
+	Code  string
+}

@@ -8,7 +8,6 @@ import (
 type CreateTableRequest struct {
 	OrganizationID uuid.UUID `json:"-"`
 	Number         uint64    `json:"number" binding:"required"`
-	Status         string    `json:"status"`
 	Seats          uint64    `json:"seats" binding:"required"`
 }
 

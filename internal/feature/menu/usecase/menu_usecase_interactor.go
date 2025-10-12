@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"Test/internal/feature/menu/entity"
 	"Test/internal/feature/menu/interface_adapter/dto"
 	"Test/internal/feature/menu/repository"
 	"Test/pkg/storage"
@@ -9,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
+	"github.com/shopspring/decimal"
+	"time"
 )
 
 type MenuUseCaseInteractor struct {
@@ -20,16 +23,44 @@ func NewMenuUseCaseInteractor(menuRepo repository.MenuRepository, storage storag
 	return &MenuUseCaseInteractor{menuRepo: menuRepo, storage: storage}
 }
 
-func (uc *MenuUseCaseInteractor) CreateMenuItem(ctx context.Context, item *dto.MenuItemWithRecipeDTO, fileOpts *storage.StorageFileOptions) (*dto.CreateMenuItemResponse, error) {
-	item.MenuItem.ID = uuid.New()
-	for _, i := range item.RecipeItems {
-		i.ID = uuid.New()
-		i.MenuItemID = item.MenuItem.ID
+func (uc *MenuUseCaseInteractor) CreateMenuItem(ctx context.Context, itemDTO *dto.MenuItemWithRecipeDTO, fileOpts *storage.StorageFileOptions) error {
+
+	price, err := decimal.NewFromString(itemDTO.MenuItem.Price)
+	if err != nil {
+		return err
+	}
+
+	menuItem := entity.MenuItem{
+		ID:             uuid.New(),
+		OrganizationID: itemDTO.MenuItem.OrganizationID,
+		Name:           itemDTO.MenuItem.Name,
+		Description:    itemDTO.MenuItem.Description,
+		Price: decimal.NullDecimal{
+			Decimal: price,
+		},
+		Category:    itemDTO.MenuItem.Category,
+		IsAvailable: true,
+		UpdatedAt:   time.Now(),
+		CreatedAt:   time.Now(),
+	}
+
+	var recipeItems = make([]entity.RecipeItem, 0, len(itemDTO.RecipeItems))
+
+	for _, i := range itemDTO.RecipeItems {
+		recipeItems = append(recipeItems, entity.RecipeItem{
+			ID:             uuid.New(),
+			MenuItemID:     menuItem.ID,
+			IngredientID:   i.IngredientID,
+			QuantityNeeded: i.QuantityNeeded,
+			UnitOfMeasure:  i.UnitOfMeasure,
+			UpdatedAt:      time.Now(),
+			CreatedAt:      time.Now(),
+		})
 	}
 
 	txRepo, err := uc.menuRepo.StartTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer func() {
 		if err := txRepo.Rollback(ctx); err != nil && !errors.Is(err, pgx.ErrTxClosed) {
@@ -37,23 +68,23 @@ func (uc *MenuUseCaseInteractor) CreateMenuItem(ctx context.Context, item *dto.M
 		}
 	}()
 
-	if err := txRepo.CreateMenuItem(ctx, item.MenuItem); err != nil {
-		return nil, err
+	if err := txRepo.CreateMenuItem(ctx, menuItem); err != nil {
+		return err
 	}
 
-	if err := txRepo.AddRecipeItems(ctx, item.RecipeItems); err != nil {
-		return nil, err
+	if err := txRepo.AddRecipeItems(ctx, recipeItems); err != nil {
+		return err
 	}
 
-	if err := uc.storage.UploadFile(ctx, item.MenuItem.ID.String(), fileOpts.File, fileOpts.FileSize, fileOpts.ContentType); err != nil {
-		return nil, err
+	if err := uc.storage.UploadFile(ctx, menuItem.ID.String(), fileOpts.File, fileOpts.FileSize, fileOpts.ContentType); err != nil {
+		return err
 	}
 
 	if err := txRepo.Commit(ctx); err != nil {
 		log.Error().Err(err).Send()
 	}
 
-	return &dto.CreateMenuItemResponse{Status: "Ok"}, err
+	return nil
 }
 
 func (uc *MenuUseCaseInteractor) UpdateMenuItem(ctx context.Context, item *dto.MenuItemWithRecipeDTO) (*dto.UpdateMenuItemResponse, error) {
@@ -70,15 +101,15 @@ func (uc *MenuUseCaseInteractor) UpdateMenuItem(ctx context.Context, item *dto.M
 		}
 	}()
 
-	err = tx.UpdateRecipeItem(ctx, item.RecipeItems[0])
-	if err != nil {
-		return nil, err
-	}
-
-	err = tx.UpdateMenuItem(ctx, item.MenuItem)
-	if err != nil {
-		return nil, err
-	}
+	//err = tx.UpdateRecipeItem(ctx, item.RecipeItems[0])
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//err = tx.UpdateMenuItem(ctx, item.MenuItem)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	if err = tx.Commit(ctx); err != nil {
 		log.Error().Err(err).Msg("MenuUseCase@UpdateMenuItem")

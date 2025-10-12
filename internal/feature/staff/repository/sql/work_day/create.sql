@@ -1,0 +1,1 @@
+INSERT INTO work_days (id, staff_id, day_of_week, shift_start, shift_end, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)

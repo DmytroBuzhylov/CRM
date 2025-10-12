@@ -66,8 +66,8 @@ func (r *PostgresInventoryRepository) GetAll(ctx context.Context, organizationID
 }
 
 func (r *PostgresInventoryRepository) Create(ctx context.Context, ingredient entity.Ingredient) error {
-	query := `INSERT INTO ingredients (id, organization_id, name, unit, quantity, minimum_quantity, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	_, err := r.db.Exec(ctx, query, ingredient.ID, ingredient.OrganizationID, ingredient.Name, ingredient.Unit, ingredient.Quantity, ingredient.MinimumQuantity, ingredient.CreatedAt, ingredient.UpdatedAt)
+	query := `INSERT INTO ingredients (id, organization_id, name, unit, quantity, minimum_quantity) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	_, err := r.db.Exec(ctx, query, ingredient.ID, ingredient.OrganizationID, ingredient.Name, ingredient.Unit, ingredient.Quantity, ingredient.MinimumQuantity)
 	if err != nil {
 		return err
 	}
