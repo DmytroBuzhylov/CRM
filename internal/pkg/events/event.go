@@ -2,7 +2,11 @@ package events
 
 import "time"
 
-type EventBus struct {
+type EventBus interface {
+	SendEvent(ev *Event)
+}
+
+type ChanEventBus struct {
 	Events chan<- *Event
 	Errors chan<- *EventError
 }
