@@ -25,23 +25,23 @@ var updateStaffInvitationExpireQuery string
 var updateStaffInvitationStatusQuery string
 
 type InvitationStaffRepo struct {
-	provider provider.DataProvider
-	qb       sq.StatementBuilderType
+	connector provider.SQLConnector
+	qb        sq.StatementBuilderType
 }
 
-func NewInvitationStaffRepo(provider provider.DataProvider) *InvitationStaffRepo {
+func NewInvitationStaffRepo(connector provider.SQLConnector) *InvitationStaffRepo {
 	return &InvitationStaffRepo{
-		provider: provider,
-		qb:       sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+		connector: connector,
+		qb:        sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 	}
 }
 
 func (r *InvitationStaffRepo) Create(ctx context.Context, invite *entity.StaffInvitation) error {
-	_, err := r.provider.Exec(ctx, createStaffInvitationQuery,
+	_, err := r.connector.Exec(ctx, createStaffInvitationQuery,
 		invite.ID,
 		invite.OrganizationID,
 		invite.InvitedEmail,
-		invite.InviterUserId,
+		invite.InviterUserID,
 		invite.InvitationCode,
 		invite.Position,
 		invite.RoleID,
@@ -54,23 +54,23 @@ func (r *InvitationStaffRepo) Create(ctx context.Context, invite *entity.StaffIn
 
 func (r *InvitationStaffRepo) Expire(ctx context.Context, id uuid.UUID) error {
 
-	_, err := r.provider.Exec(ctx, updateStaffInvitationExpireQuery, id)
+	_, err := r.connector.Exec(ctx, updateStaffInvitationExpireQuery, id)
 	return err
 }
 
 func (r *InvitationStaffRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
 
-	_, err := r.provider.Exec(ctx, updateStaffInvitationStatusQuery, status, id)
+	_, err := r.connector.Exec(ctx, updateStaffInvitationStatusQuery, status, id)
 	return err
 }
 
 func (r *InvitationStaffRepo) Get(ctx context.Context, id uuid.UUID) (*entity.StaffInvitation, error) {
 	var invite = new(entity.StaffInvitation)
 
-	err := r.provider.QueryRow(ctx, getStaffInvitationByIDQuery).Scan(
+	err := r.connector.QueryRow(ctx, getStaffInvitationByIDQuery).Scan(
 		&invite.OrganizationID,
 		&invite.InvitedEmail,
-		&invite.InviterUserId,
+		&invite.InviterUserID,
 		&invite.InvitationCode,
 		&invite.Position,
 		&invite.RoleID,
@@ -89,11 +89,11 @@ func (r *InvitationStaffRepo) Get(ctx context.Context, id uuid.UUID) (*entity.St
 func (r *InvitationStaffRepo) GetByCode(ctx context.Context, code string) (*entity.StaffInvitation, error) {
 	var invite = new(entity.StaffInvitation)
 
-	err := r.provider.QueryRow(ctx, getStaffInvitationByCodeQuery).Scan(
+	err := r.connector.QueryRow(ctx, getStaffInvitationByCodeQuery).Scan(
 		&invite.ID,
 		&invite.OrganizationID,
 		&invite.InvitedEmail,
-		&invite.InviterUserId,
+		&invite.InviterUserID,
 		&invite.InvitationCode,
 		&invite.Position,
 		&invite.RoleID,

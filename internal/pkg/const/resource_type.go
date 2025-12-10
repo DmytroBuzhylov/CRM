@@ -1,4 +1,4 @@
-package notification_const
+package system_const
 
 type (
 	ResourceType string

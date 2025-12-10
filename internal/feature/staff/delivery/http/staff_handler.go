@@ -13,6 +13,10 @@ func NewStaffHandler(uc usecase.StaffUseCase) *StaffHandler {
 	return &StaffHandler{uc: uc}
 }
 
-func (h *StaffHandler) InviteHandler(c *gin.Context) {
-
+func (h *StaffHandler) CreateInviteHandler(c *gin.Context) {
+	
 }
+
+func (h *StaffHandler) AcceptInviteHandler(c *gin.Context) {}
+
+func (h *StaffHandler) DismissStaffHandler(c *gin.Context) {}

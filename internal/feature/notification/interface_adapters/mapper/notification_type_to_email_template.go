@@ -1,7 +1,7 @@
 package mapper
 
 import (
-	notification_const "Test/internal/feature/notification/entity/const"
+	"Test/internal/pkg/const"
 	"errors"
 )
 

@@ -25,19 +25,19 @@ var updateBreakQuery string
 var deleteBreakQuery string
 
 type BreakRepo struct {
-	provider provider.DataProvider
-	qb       sq.StatementBuilderType
+	connector provider.SQLConnector
+	qb        sq.StatementBuilderType
 }
 
-func NewBreakRepo(provider provider.DataProvider) *BreakRepo {
+func NewBreakRepo(connector provider.SQLConnector) *BreakRepo {
 	return &BreakRepo{
-		provider: provider,
-		qb:       sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+		connector: connector,
+		qb:        sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 	}
 }
 
 func (r *BreakRepo) Create(ctx context.Context, br *entity.Break) error {
-	_, err := r.provider.Exec(ctx, createBreakQuery,
+	_, err := r.connector.Exec(ctx, createBreakQuery,
 		br.ID,
 		br.WorkDayID,
 		br.BreakBegin,
@@ -50,7 +50,7 @@ func (r *BreakRepo) Create(ctx context.Context, br *entity.Break) error {
 
 func (r *BreakRepo) Get(ctx context.Context, id uuid.UUID) (*entity.Break, error) {
 	var br entity.Break
-	err := r.provider.QueryRow(ctx, getBreakByIDQuery, id).Scan(
+	err := r.connector.QueryRow(ctx, getBreakByIDQuery, id).Scan(
 		&br.ID,
 		&br.WorkDayID,
 		&br.BreakBegin,
@@ -65,7 +65,7 @@ func (r *BreakRepo) Get(ctx context.Context, id uuid.UUID) (*entity.Break, error
 }
 
 func (r *BreakRepo) GetMany(ctx context.Context, workDayId uuid.UUID) ([]*entity.Break, error) {
-	rows, err := r.provider.Query(ctx, getManyBreaksQuery, workDayId)
+	rows, err := r.connector.Query(ctx, getManyBreaksQuery, workDayId)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (r *BreakRepo) GetMany(ctx context.Context, workDayId uuid.UUID) ([]*entity
 }
 
 func (r *BreakRepo) Update(ctx context.Context, br *entity.Break) error {
-	_, err := r.provider.Exec(ctx, updateBreakQuery,
+	_, err := r.connector.Exec(ctx, updateBreakQuery,
 		br.BreakBegin,
 		br.BreakEnd,
 		br.UpdatedAt,
@@ -101,6 +101,6 @@ func (r *BreakRepo) Update(ctx context.Context, br *entity.Break) error {
 }
 
 func (r *BreakRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	_, err := r.provider.Exec(ctx, deleteBreakQuery, id)
+	_, err := r.connector.Exec(ctx, deleteBreakQuery, id)
 	return err
 }

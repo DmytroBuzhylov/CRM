@@ -19,11 +19,11 @@ import (
 
 type UserUseCaseInteractor struct {
 	repo      repository.UserRepository
-	store     store.Store
+	store     store.Cash
 	jwtConfig config.JWTConfig
 }
 
-func NewUserUseCaseInteractor(repo repository.UserRepository, jwtConfig config.JWTConfig, store store.Store) *UserUseCaseInteractor {
+func NewUserUseCaseInteractor(repo repository.UserRepository, jwtConfig config.JWTConfig, store store.Cash) *UserUseCaseInteractor {
 	return &UserUseCaseInteractor{repo: repo, jwtConfig: jwtConfig, store: store}
 }
 

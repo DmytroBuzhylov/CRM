@@ -2,12 +2,12 @@ package usecase
 
 import (
 	"Test/internal/feature/notification/entity"
-	notification_const "Test/internal/feature/notification/entity/const"
 	"Test/internal/feature/notification/interface_adapters/dto"
 	"Test/internal/feature/notification/interface_adapters/email_sender"
 	"Test/internal/feature/notification/interface_adapters/mapper"
 	"Test/internal/feature/notification/repository"
 	repository2 "Test/internal/feature/user/repository"
+	"Test/internal/pkg/const"
 	"context"
 	"errors"
 	"fmt"

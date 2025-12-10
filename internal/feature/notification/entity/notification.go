@@ -1,7 +1,7 @@
 package entity
 
 import (
-	notification_const "Test/internal/feature/notification/entity/const"
+	notification_const2 "Test/internal/pkg/const"
 	"github.com/google/uuid"
 )
 
@@ -10,14 +10,14 @@ type Notification struct {
 	OrganizationID uuid.UUID
 	UserID         uuid.UUID
 
-	Type        notification_const.NotificationType
+	Type        notification_const2.NotificationType
 	Text        string
 	SendToEmail bool
 	SendToApp   bool
 	Viewed      bool
 
 	RelatedResourceID *uuid.UUID
-	ResourceType      *notification_const.ResourceType
+	ResourceType      *notification_const2.ResourceType
 
 	CreatedAt int64
 }

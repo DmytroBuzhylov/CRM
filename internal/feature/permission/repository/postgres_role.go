@@ -11,11 +11,11 @@ import (
 )
 
 type RoleRepo struct {
-	provider provider.DataProvider
+	provider provider.SQLConnector
 	qb       sq.StatementBuilderType
 }
 
-func NewRoleRepo(provider provider.DataProvider) *RoleRepo {
+func NewRoleRepo(provider provider.SQLConnector) *RoleRepo {
 	return &RoleRepo{
 		provider: provider,
 		qb:       sq.StatementBuilder.PlaceholderFormat(sq.Dollar),

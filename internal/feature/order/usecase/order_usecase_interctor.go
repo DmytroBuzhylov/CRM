@@ -6,7 +6,6 @@ import (
 	"Test/internal/feature/order/repository"
 	"context"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/rs/zerolog/log"
@@ -14,6 +13,7 @@ import (
 
 type OrderUseCaseInteractor struct {
 	repo repository.OrderRepository
+	//evBus events.EventBus
 }
 
 func NewOrderUseCaseInteractor(repo repository.OrderRepository) *OrderUseCaseInteractor {
@@ -29,6 +29,7 @@ func (uc *OrderUseCaseInteractor) CreateOrder(ctx context.Context, req *dto.Crea
 		UserType:       req.Order.UserType,
 		Notes:          req.Order.Notes,
 	}
+
 	orderItems := make([]*entity.OrderItem, 0, len(req.OrderItems))
 	for _, i := range req.OrderItems {
 		orderItems = append(orderItems, &entity.OrderItem{
@@ -37,8 +38,6 @@ func (uc *OrderUseCaseInteractor) CreateOrder(ctx context.Context, req *dto.Crea
 		})
 	}
 
-	fmt.Println(newOrder)
-	fmt.Println(orderItems[0])
 	err := uc.repo.CreateOrder(ctx, newOrder, orderItems)
 	if err != nil {
 		log.Warn().Err(err).
@@ -47,6 +46,11 @@ func (uc *OrderUseCaseInteractor) CreateOrder(ctx context.Context, req *dto.Crea
 			Msg("failed to create order")
 		return errors.New("failed to create order")
 	}
+
+	entity.OrderCreatedEvent.Emit(ctx, &entity.OrderWithItems{
+		Order: newOrder,
+		Items: orderItems,
+	})
 
 	return nil
 }

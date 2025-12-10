@@ -11,14 +11,14 @@ import (
 )
 
 type RolePermissionRepo struct {
-	provider provider.DataProvider
-	qb       sq.StatementBuilderType
+	connector provider.SQLConnector
+	qb        sq.StatementBuilderType
 }
 
-func NewRolePermissionRepo(provider provider.DataProvider) *RolePermissionRepo {
+func NewRolePermissionRepo(connector provider.SQLConnector) *RolePermissionRepo {
 	return &RolePermissionRepo{
-		provider: provider,
-		qb:       sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+		connector: connector,
+		qb:        sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 	}
 }
 
@@ -44,7 +44,7 @@ func (r *RolePermissionRepo) AddPermissionToRole(ctx context.Context, roleID uui
 		return err
 	}
 
-	_, err = r.provider.Exec(ctx, query, args...)
+	_, err = r.connector.Exec(ctx, query, args...)
 	return err
 }
 
@@ -60,7 +60,7 @@ func (r *RolePermissionRepo) RemovePermissionFromRole(ctx context.Context, roleI
 		return err
 	}
 
-	_, err = r.provider.Exec(ctx, query, args...)
+	_, err = r.connector.Exec(ctx, query, args...)
 	return err
 }
 
@@ -75,7 +75,7 @@ func (r *RolePermissionRepo) GetPermissionsByRole(ctx context.Context, roleID uu
 		return nil, err
 	}
 
-	rows, err := r.provider.Query(ctx, query, args...)
+	rows, err := r.connector.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

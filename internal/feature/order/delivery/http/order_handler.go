@@ -5,11 +5,12 @@ import (
 	"Test/internal/feature/order/usecase"
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"net/http"
-	"time"
 )
 
 type OrderHandler struct {
@@ -110,8 +111,4 @@ func (h *OrderHandler) GetOrganizationsOrdersHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
-}
-
-func (h *OrderHandler) ListenOrderSignals() {
-
 }

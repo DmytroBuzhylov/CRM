@@ -5,10 +5,12 @@ import (
 	"Test/internal/pkg/provider"
 	"context"
 	_ "embed"
+	"encoding/json"
 	"fmt"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"time"
 )
 
 //go:embed sql/staff/get_by_id.sql
@@ -27,19 +29,19 @@ var createStaffQuery string
 var deleteStaffByIDQuery string
 
 type StaffRepo struct {
-	provider provider.DataProvider
-	qb       sq.StatementBuilderType
+	connector provider.SQLConnector
+	qb        sq.StatementBuilderType
 }
 
-func NewStaffRepo(provider provider.DataProvider) *StaffRepo {
+func NewStaffRepo(connector provider.SQLConnector) *StaffRepo {
 	return &StaffRepo{
-		provider: provider,
-		qb:       sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+		connector: connector,
+		qb:        sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 	}
 }
 
 func (r *StaffRepo) Create(ctx context.Context, staff *entity.Staff) error {
-	_, err := r.provider.Exec(ctx, createStaffQuery,
+	_, err := r.connector.Exec(ctx, createStaffQuery,
 		staff.ID,
 		staff.UserID,
 		staff.OrganizationID,
@@ -52,14 +54,14 @@ func (r *StaffRepo) Create(ctx context.Context, staff *entity.Staff) error {
 }
 
 func (r *StaffRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	_, err := r.provider.Exec(ctx, deleteStaffByIDQuery, id)
+	_, err := r.connector.Exec(ctx, deleteStaffByIDQuery, id)
 	return err
 }
 
 func (r *StaffRepo) Get(ctx context.Context, id uuid.UUID) (*entity.Staff, error) {
 	var staff entity.Staff
 
-	err := r.provider.QueryRow(ctx, getStaffByIDQuery, id).Scan(
+	err := r.connector.QueryRow(ctx, getStaffByIDQuery, id).Scan(
 		&staff.ID,
 		&staff.UserID,
 		&staff.OrganizationID,
@@ -77,7 +79,7 @@ func (r *StaffRepo) Get(ctx context.Context, id uuid.UUID) (*entity.Staff, error
 func (r *StaffRepo) GetByUserID(ctx context.Context, userID uuid.UUID) (*entity.Staff, error) {
 	var staff entity.Staff
 
-	err := r.provider.QueryRow(ctx, getStaffByUserIDQuery, userID).Scan(
+	err := r.connector.QueryRow(ctx, getStaffByUserIDQuery, userID).Scan(
 		&staff.ID,
 		&staff.UserID,
 		&staff.OrganizationID,
@@ -93,7 +95,7 @@ func (r *StaffRepo) GetByUserID(ctx context.Context, userID uuid.UUID) (*entity.
 }
 
 func (r *StaffRepo) GetMany(ctx context.Context, organizationId uuid.UUID) ([]*entity.Staff, error) {
-	rows, err := r.provider.Query(ctx, getStaffByOrganizationIDQuery, organizationId)
+	rows, err := r.connector.Query(ctx, getStaffByOrganizationIDQuery, organizationId)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +130,7 @@ func (r *StaffRepo) GetRoleIDByUserID(ctx context.Context, userID uuid.UUID) (uu
 	}
 
 	var roleID uuid.UUID
-	err = r.provider.QueryRow(ctx, query, arg...).Scan(&roleID)
+	err = r.connector.QueryRow(ctx, query, arg...).Scan(&roleID)
 	if err != nil {
 		return [16]byte{}, err
 	}
@@ -142,24 +144,13 @@ var workDaySQL string
 var breakSQL string
 
 func (r *StaffRepo) SaveTimetable(ctx context.Context, staffID uuid.UUID, workDays []entity.WorkDay, breaksByWorkDayID map[uuid.UUID][]entity.Break) (err error) {
-	tx, err := r.provider.BeginTx(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer func() {
-		if err != nil {
-			tx.Rollback(ctx)
-		} else {
-			err = tx.Commit(ctx)
-		}
-	}()
 
 	workDayIDMap := make(map[uuid.UUID]uuid.UUID)
 
 	for _, wd := range workDays {
 		var realWorkDayID uuid.UUID
 
-		err = tx.QueryRow(ctx, workDaySQL,
+		err = r.connector.QueryRow(ctx, workDaySQL,
 			wd.ID,
 			staffID,
 			int(wd.DayOfWeak),
@@ -185,7 +176,7 @@ func (r *StaffRepo) SaveTimetable(ctx context.Context, staffID uuid.UUID, workDa
 			return fmt.Errorf("delete breaks query build failed: %w", err)
 		}
 
-		if _, err = tx.Exec(ctx, delQuery, delArgs...); err != nil {
+		if _, err = r.connector.Exec(ctx, delQuery, delArgs...); err != nil {
 			return fmt.Errorf("deleting old breaks failed: %w", err)
 		}
 	}
@@ -194,7 +185,7 @@ func (r *StaffRepo) SaveTimetable(ctx context.Context, staffID uuid.UUID, workDa
 		for _, b := range breaks {
 			realWorkDayID := workDayIDMap[b.WorkDayID]
 
-			if _, err = tx.Exec(ctx, breakSQL,
+			if _, err = r.connector.Exec(ctx, breakSQL,
 				uuid.New(),
 				realWorkDayID,
 				b.BreakBegin.Format("15:04:05"),
@@ -209,17 +200,6 @@ func (r *StaffRepo) SaveTimetable(ctx context.Context, staffID uuid.UUID, workDa
 }
 
 func (r *StaffRepo) DeleteTimetable(ctx context.Context, staffID uuid.UUID, days []time.Weekday) error {
-	tx, err := r.provider.BeginTx(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer func() {
-		if err != nil {
-			tx.Rollback(ctx)
-		} else {
-			err = tx.Commit(ctx)
-		}
-	}()
 
 	var dayInts []int
 	for _, d := range days {
@@ -231,7 +211,7 @@ func (r *StaffRepo) DeleteTimetable(ctx context.Context, staffID uuid.UUID, days
 		"day_of_week": dayInts,
 	}).ToSql()
 
-	rows, err := tx.Query(ctx, selectQuery, selectArgs...)
+	rows, err := r.connector.Query(ctx, selectQuery, selectArgs...)
 	if err != nil {
 		return fmt.Errorf("failed to query work day IDs: %w", err)
 	}
@@ -252,10 +232,53 @@ func (r *StaffRepo) DeleteTimetable(ctx context.Context, staffID uuid.UUID, days
 
 	if len(workDayIDsToDelete) > 0 {
 		deleteWDQuery, deleteWDArgs, _ := r.qb.Delete("work_days").Where(sq.Eq{"id": workDayIDsToDelete}).ToSql()
-		if _, err = tx.Exec(ctx, deleteWDQuery, deleteWDArgs...); err != nil {
+		if _, err = r.connector.Exec(ctx, deleteWDQuery, deleteWDArgs...); err != nil {
 			return fmt.Errorf("failed to delete work days: %w", err)
 		}
 	}
 
 	return nil
+}
+
+//go:embed sql/staff/get_staff_with_schedule.sql
+var getStaffWithScheduleQuery string
+
+func (r *StaffRepo) FindAvailableStaffByPermission(ctx context.Context, orgID uuid.UUID, permissionName string) ([]*StaffWithSchedule, error) {
+	rows, err := r.connector.Query(ctx, getStaffWithScheduleQuery, orgID, permissionName)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var results []*StaffWithSchedule
+
+	for rows.Next() {
+		var s StaffWithSchedule
+
+		err := rows.Scan(
+			&s.ID,
+			&s.UserID,
+			&s.Position,
+			&s.RoleName,
+			&s.WorkSchedule,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("row scan error: %w", err)
+		}
+
+		var schedule []WorkDaySchedule
+		if len(s.WorkSchedule) > 0 && string(s.WorkSchedule) != "[]" {
+			if err := json.Unmarshal(s.WorkSchedule, &schedule); err != nil {
+				return nil, fmt.Errorf("json unmarshal schedule error: %w", err)
+			}
+		}
+		
+		results = append(results, &s)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
+
+	return results, nil
 }

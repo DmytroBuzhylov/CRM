@@ -1,12 +1,11 @@
 package ws
 
 import (
-	"Test/internal/feature/notification/interface_adapters/event_listener"
-	"Test/internal/feature/notification/interface_adapters/events"
+	"Test/internal/pkg/events"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"log"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"sync"
 	"time"
@@ -28,17 +27,20 @@ type Hub struct {
 	unregister chan *Client
 	broadcast  chan *Message
 	evChan     <-chan *events.Event
-	errChan    <-chan error
+	errChan    <-chan *events.EventError
 	mu         sync.Mutex
 }
 
 type NotificationWSHandler struct {
 	upgrader websocket.Upgrader
-	l        event_listener.Listener
 	hub      Hub
 }
 
-func NewNotificationWSHandler(upgrader websocket.Upgrader, l event_listener.Listener) *NotificationWSHandler {
+func NewNotificationWSHandler(
+	upgrader websocket.Upgrader,
+	evChan <-chan *events.Event,
+	errChan <-chan *events.EventError,
+) *NotificationWSHandler {
 	nh := &NotificationWSHandler{
 		upgrader: upgrader,
 		hub: Hub{
@@ -46,10 +48,11 @@ func NewNotificationWSHandler(upgrader websocket.Upgrader, l event_listener.List
 			register:   make(chan *Client, 128),
 			unregister: make(chan *Client, 128),
 			broadcast:  make(chan *Message, 1024),
+			evChan:     evChan,
+			errChan:    errChan,
 		},
-		l: l,
 	}
-	nh.hub.evChan, nh.hub.errChan = l.Listen()
+
 	go nh.hub.Run()
 
 	return nh
@@ -74,12 +77,10 @@ func (h *Hub) Run() {
 		case msg := <-h.broadcast:
 			for conn, ok := range h.clients[msg.UserID] {
 				if !ok {
-					log.Println("incorrect client")
 					continue
 				}
 				err := conn.WriteMessage(websocket.BinaryMessage, msg.Data)
 				if err != nil {
-					log.Println("error write message:", err)
 					continue
 				}
 			}
@@ -89,6 +90,10 @@ func (h *Hub) Run() {
 				UserID: userId,
 				Data:   msg.Data,
 			}
+		case evErr := <-h.errChan:
+			log.Warn().Str("resource_id", evErr.ResourceID).
+				Str("error", evErr.Error()).
+				Send()
 		}
 	}
 }
@@ -136,7 +141,6 @@ func (h *NotificationWSHandler) NotificationWSHandler(c *gin.Context) {
 		select {
 		case <-ticker.C:
 			if err := conn.WriteMessage(websocket.TextMessage, []byte("")); err != nil {
-				log.Printf("Ticker write error: %v", err)
 				return
 			}
 		}

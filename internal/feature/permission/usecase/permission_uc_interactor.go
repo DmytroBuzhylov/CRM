@@ -6,12 +6,13 @@ import (
 	repository2 "Test/internal/feature/staff/repository"
 	"Test/pkg/store"
 	"context"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"time"
 )
 
-type permissionUCInteractor struct {
+type PermissionUCInteractor struct {
 	permRepo     repository.PermissionRepository
 	roleRepo     repository.RoleRepository
 	rolePermRepo repository.RolePermissionRepository
@@ -25,8 +26,8 @@ func NewPermissionUCInteractor(
 	rolePermRepo repository.RolePermissionRepository,
 	staffRepo repository2.StaffRepository,
 	store store.Cash,
-) *permissionUCInteractor {
-	return &permissionUCInteractor{
+) *PermissionUCInteractor {
+	return &PermissionUCInteractor{
 		permRepo:     permRepo,
 		roleRepo:     roleRepo,
 		rolePermRepo: rolePermRepo,
@@ -35,7 +36,7 @@ func NewPermissionUCInteractor(
 	}
 }
 
-func (i *permissionUCInteractor) RequestUserPermissions(ctx context.Context, userID uuid.UUID) ([]*entity.Permission, error) {
+func (i *PermissionUCInteractor) RequestUserPermissions(ctx context.Context, userID uuid.UUID) ([]*entity.Permission, error) {
 
 	roleID, err := i.staffRepo.GetRoleIDByUserID(ctx, userID)
 	if err != nil {
@@ -50,7 +51,7 @@ func (i *permissionUCInteractor) RequestUserPermissions(ctx context.Context, use
 	return permissions, nil
 }
 
-func (i *permissionUCInteractor) HasPermission(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, permissionName string) bool {
+func (i *PermissionUCInteractor) HasPermission(ctx context.Context, userID uuid.UUID, organizationID uuid.UUID, permissionName string) bool {
 
 	key := userID.String() + permissionName
 
@@ -76,10 +77,10 @@ func (i *permissionUCInteractor) HasPermission(ctx context.Context, userID uuid.
 	return exist
 }
 
-func (i *permissionUCInteractor) AddPermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
+func (i *PermissionUCInteractor) AddPermissions(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
 	return i.rolePermRepo.AddPermissionToRole(ctx, roleID, permissionIDs)
 }
 
-func (i *permissionUCInteractor) DeletePermissions(ctx context.Context, roleID uuid.UUID, permissions []uuid.UUID) error {
+func (i *PermissionUCInteractor) DeletePermissions(ctx context.Context, roleID uuid.UUID, permissions []uuid.UUID) error {
 	return i.rolePermRepo.RemovePermissionFromRole(ctx, roleID, permissions)
 }

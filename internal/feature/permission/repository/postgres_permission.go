@@ -12,11 +12,11 @@ import (
 )
 
 type PermissionRepo struct {
-	provider provider.DataProvider
+	provider provider.SQLConnector
 	qb       sq.StatementBuilderType
 }
 
-func NewPermissionRepo(provider provider.DataProvider) *PermissionRepo {
+func NewPermissionRepo(provider provider.SQLConnector) *PermissionRepo {
 	return &PermissionRepo{
 		provider: provider,
 		qb:       sq.StatementBuilder.PlaceholderFormat(sq.Dollar),

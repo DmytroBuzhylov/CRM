@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-type invitationUseCaseInteractor struct {
+type InvitationUseCaseInteractor struct {
 	repo repository.InvitationRepository
 }
 
-func NewInvitationUseCaseInteractor(repo repository.InvitationRepository) *invitationUseCaseInteractor {
-	return &invitationUseCaseInteractor{repo: repo}
+func NewInvitationUseCaseInteractor(repo repository.InvitationRepository) *InvitationUseCaseInteractor {
+	return &InvitationUseCaseInteractor{repo: repo}
 }
 
-func (uc *invitationUseCaseInteractor) GenerateInvitation(ctx context.Context, req dto.CreateInviteRequest) (dto.CreateInviteResponse, error) {
+func (uc *InvitationUseCaseInteractor) GenerateInvitation(ctx context.Context, req dto.CreateInviteRequest) (dto.CreateInviteResponse, error) {
 	code := utils.GenerateInvitationCode()
 	newInvitation := entity.Invitation{
 		OrganizationID: req.OrganizationID,
@@ -36,7 +36,7 @@ func (uc *invitationUseCaseInteractor) GenerateInvitation(ctx context.Context, r
 	return dto.CreateInviteResponse{Status: "ok", Code: code}, nil
 }
 
-func (uc *invitationUseCaseInteractor) AcceptInvitation(ctx context.Context, req dto.AcceptInvitationRequest) (dto.AcceptInvitationResponse, error) {
+func (uc *InvitationUseCaseInteractor) AcceptInvitation(ctx context.Context, req dto.AcceptInvitationRequest) (dto.AcceptInvitationResponse, error) {
 	err := uc.repo.AcceptInvite(ctx, req.UserID, req.Code)
 	if err != nil {
 		return dto.AcceptInvitationResponse{}, err

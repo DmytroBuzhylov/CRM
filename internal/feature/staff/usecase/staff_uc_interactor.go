@@ -5,10 +5,13 @@ import (
 	"Test/internal/feature/staff/interface_adapters/dto"
 	"Test/internal/feature/staff/interface_adapters/mapper"
 	"Test/internal/feature/staff/repository"
+	"Test/internal/pkg/provider"
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type StaffUCInteractor struct {
@@ -16,6 +19,7 @@ type StaffUCInteractor struct {
 	workDayRepo         repository.WorkDayRepository
 	breakRepo           repository.BreakRepository
 	staffInvitationRepo repository.InvitationStaffRepository
+	pool                *pgxpool.Pool
 }
 
 func NewStaffUCInteractor(
@@ -37,7 +41,7 @@ func (i *StaffUCInteractor) CreateInviteToStaff(ctx context.Context, staff *dto.
 		ID:             uuid.New(),
 		OrganizationID: staff.OrganizationID,
 		InvitedEmail:   staff.InvitedEmail,
-		InviterUserId:  staff.InviterUserId,
+		InviterUserID:  staff.InviterUserId,
 		InvitationCode: uuid.New().String(),
 		Position:       staff.Position,
 		RoleID:         staff.RoleID,
@@ -51,8 +55,19 @@ func (i *StaffUCInteractor) CreateInviteToStaff(ctx context.Context, staff *dto.
 }
 
 func (i *StaffUCInteractor) AcceptInviteToStaff(ctx context.Context, userID uuid.UUID, inviteCode string) error {
-	staffInvite, err := i.staffInvitationRepo.GetByCode(ctx, inviteCode)
+	dataProvider := provider.NewPostgresProvider(i.pool)
+
+	tx, err := dataProvider.BeginTx(ctx)
 	if err != nil {
+		return err
+	}
+
+	staffInvitationRepo := repository.NewInvitationStaffRepo(tx)
+	staffRepo := repository.NewStaffRepo(dataProvider)
+
+	staffInvite, err := staffInvitationRepo.GetByCode(ctx, inviteCode)
+	if err != nil {
+		tx.Rollback(ctx)
 		return err
 	}
 
@@ -66,18 +81,19 @@ func (i *StaffUCInteractor) AcceptInviteToStaff(ctx context.Context, userID uuid
 		UpdatedAt:      time.Now(),
 	}
 
-	err = i.staffRepo.Create(ctx, staff)
+	err = staffRepo.Create(ctx, staff)
 	if err != nil {
+		tx.Rollback(ctx)
 		return err
 	}
 
-	i.staffInvitationRepo.Expire(ctx, staffInvite.ID)
+	err = staffInvitationRepo.Expire(ctx, staffInvite.ID)
+	if err != nil {
+		tx.Rollback(ctx)
+		return err
+	}
 
-	return nil
-}
-
-func (i *StaffUCInteractor) UpdateStaffRoleID(ctx context.Context, id uuid.UUID, roleID uuid.UUID) error {
-
+	return tx.Commit(ctx)
 }
 
 func (i *StaffUCInteractor) DismissStaff(ctx context.Context, id uuid.UUID) error {

@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -17,7 +16,6 @@ type TaskHandler struct {
 }
 
 func NewTaskHandler(taskUC usecase.TaskUseCase) *TaskHandler {
-
 	return &TaskHandler{
 		taskUC: taskUC,
 	}
@@ -69,11 +67,6 @@ func (h *TaskHandler) GetTask(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
-}
-
-func parseUint(str string) (uint, error) {
-	res, err := strconv.ParseUint(str, 10, 64)
-	return uint(res), err
 }
 
 func (h *TaskHandler) GetTasks(c *gin.Context) {

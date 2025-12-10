@@ -30,6 +30,7 @@ import (
 	postgres2 "Test/internal/feature/user/repository/postgres"
 	usecase2 "Test/internal/feature/user/usecase"
 	"Test/internal/middleware"
+	"Test/internal/pkg/events"
 	"Test/pkg/db"
 	"Test/pkg/logger"
 	"Test/pkg/storage"
@@ -117,7 +118,11 @@ func main() {
 	sender := email_sender.NewMailService(cfg.Email.Host, cfg.Email.Port, cfg.Email.Username, cfg.Email.Password, cfg.Email.From)
 	notifyRepo := postgres8.NewPostgresNotificationRepository(dbPool)
 	notifyUC := usecase8.NewNotificationUseCaseInteractor(notifyRepo, userRepo, sender)
-	eventLister := listener2.NewTaskListenerInteractor(notifyUC)
+
+	eventBus, evCh, errCh := events.NewEventBus(1024)
+	taskEventLister := listener2.NewTaskListenerInteractor(notifyUC, eventBus)
+	taskEventLister.Listen(context.Background())
+	taskEventLister.Close()
 
 	notifyHTTPHandler := http8.NewNotificationHTTPHandler(notifyUC)
 	notificationWSHandler := ws.NewNotificationWSHandler(websocket.Upgrader{
@@ -126,7 +131,7 @@ func main() {
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
-	}, eventLister)
+	}, evCh, errCh)
 
 	if cfg.Log.Production {
 		gin.SetMode(gin.ReleaseMode)

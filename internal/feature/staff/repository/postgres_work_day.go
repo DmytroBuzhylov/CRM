@@ -26,16 +26,19 @@ var updateWorkDayQuery string
 var deleteWorkDayQuery string
 
 type WorkDayRepo struct {
-	provider provider.DataProvider
-	qb       sq.StatementBuilderType
+	connector provider.SQLConnector
+	qb        sq.StatementBuilderType
 }
 
-func NewWorkDayRepo(provider provider.DataProvider, qb sq.StatementBuilderType) *WorkDayRepo {
-	return &WorkDayRepo{provider: provider, qb: qb}
+func NewWorkDayRepo(connector provider.SQLConnector) *WorkDayRepo {
+	return &WorkDayRepo{
+		connector: connector,
+		qb:        sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+	}
 }
 
 func (r *WorkDayRepo) Create(ctx context.Context, wD *entity.WorkDay) error {
-	_, err := r.provider.Exec(ctx, createWorkDayQuery,
+	_, err := r.connector.Exec(ctx, createWorkDayQuery,
 		wD.ID,
 		wD.StaffID,
 		int(wD.DayOfWeak),
@@ -51,7 +54,7 @@ func (r *WorkDayRepo) Get(ctx context.Context, id uuid.UUID) (*entity.WorkDay, e
 	var wD = new(entity.WorkDay)
 	var dayOfWeek int
 
-	err := r.provider.QueryRow(ctx, getByIDQuery).Scan(
+	err := r.connector.QueryRow(ctx, getByIDQuery).Scan(
 		&wD.ID,
 		&wD.StaffID,
 		&dayOfWeek,
@@ -70,7 +73,7 @@ func (r *WorkDayRepo) Get(ctx context.Context, id uuid.UUID) (*entity.WorkDay, e
 
 func (r *WorkDayRepo) GetMany(ctx context.Context, staffId uuid.UUID) ([]*entity.WorkDay, error) {
 
-	rows, err := r.provider.Query(ctx, getByStaffIDQuery, staffId)
+	rows, err := r.connector.Query(ctx, getByStaffIDQuery, staffId)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +102,7 @@ func (r *WorkDayRepo) GetMany(ctx context.Context, staffId uuid.UUID) ([]*entity
 }
 
 func (r *WorkDayRepo) Update(ctx context.Context, wD *entity.WorkDay) error {
-	_, err := r.provider.Exec(ctx, updateWorkDayQuery,
+	_, err := r.connector.Exec(ctx, updateWorkDayQuery,
 		int(wD.DayOfWeak),
 		wD.ShiftStart,
 		wD.ShiftEnd,
@@ -110,6 +113,6 @@ func (r *WorkDayRepo) Update(ctx context.Context, wD *entity.WorkDay) error {
 }
 
 func (r *WorkDayRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	_, err := r.provider.Exec(ctx, deleteWorkDayQuery, id)
+	_, err := r.connector.Exec(ctx, deleteWorkDayQuery, id)
 	return err
 }

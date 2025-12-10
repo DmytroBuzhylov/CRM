@@ -5,19 +5,20 @@ import (
 	"Test/internal/feature/task/interface_adapters/dto"
 	"Test/internal/feature/task/repository"
 	"context"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-type taskUseCaseInteractor struct {
+type TaskUseCaseInteractor struct {
 	repo repository.TaskRepository
 }
 
-func NewTaskUseCaseInteractor(repo repository.TaskRepository) *taskUseCaseInteractor {
-	return &taskUseCaseInteractor{repo: repo}
+func NewTaskUseCaseInteractor(repo repository.TaskRepository) *TaskUseCaseInteractor {
+	return &TaskUseCaseInteractor{repo: repo}
 }
 
-func (i *taskUseCaseInteractor) Create(ctx context.Context, req dto.CreateTaskRequest) (dto.CreateTaskResponse, error) {
+func (i *TaskUseCaseInteractor) Create(ctx context.Context, req dto.CreateTaskRequest) (dto.CreateTaskResponse, error) {
 	timeNow := time.Now()
 	newTask := entity.Task{
 		ID:             uuid.New(),
@@ -46,7 +47,7 @@ func (i *taskUseCaseInteractor) Create(ctx context.Context, req dto.CreateTaskRe
 	}, nil
 }
 
-func (i *taskUseCaseInteractor) Delete(ctx context.Context, req dto.DeleteTaskRequest) (dto.DeleteTaskResponse, error) {
+func (i *TaskUseCaseInteractor) Delete(ctx context.Context, req dto.DeleteTaskRequest) (dto.DeleteTaskResponse, error) {
 	err := i.repo.Delete(ctx, req.ID)
 	if err != nil {
 		return dto.DeleteTaskResponse{
@@ -59,7 +60,7 @@ func (i *taskUseCaseInteractor) Delete(ctx context.Context, req dto.DeleteTaskRe
 	}, nil
 }
 
-func (i *taskUseCaseInteractor) Get(ctx context.Context, req dto.GetTaskRequest) (dto.GetTaskResponse, error) {
+func (i *TaskUseCaseInteractor) Get(ctx context.Context, req dto.GetTaskRequest) (dto.GetTaskResponse, error) {
 	gotTask, err := i.repo.Get(ctx, req.ID)
 	if err != nil {
 		return dto.GetTaskResponse{}, err
@@ -78,7 +79,7 @@ func (i *taskUseCaseInteractor) Get(ctx context.Context, req dto.GetTaskRequest)
 	}, nil
 }
 
-func (i *taskUseCaseInteractor) GetTasks(ctx context.Context, req dto.GetTasksRequest) (dto.GetTasksResponse, error) {
+func (i *TaskUseCaseInteractor) GetTasks(ctx context.Context, req dto.GetTasksRequest) (dto.GetTasksResponse, error) {
 	filter := repository.TaskFilter{
 		Name:       req.Filter.Name,
 		Priority:   req.Filter.Priority,
@@ -109,7 +110,7 @@ func (i *taskUseCaseInteractor) GetTasks(ctx context.Context, req dto.GetTasksRe
 	return dto.GetTasksResponse{Tasks: tasks}, nil
 }
 
-func (i *taskUseCaseInteractor) Update(ctx context.Context, req dto.UpdateTaskRequest) (dto.UpdateTaskResponse, error) {
+func (i *TaskUseCaseInteractor) Update(ctx context.Context, req dto.UpdateTaskRequest) (dto.UpdateTaskResponse, error) {
 	timeNow := time.Now()
 	newTask := entity.Task{
 		ID:          req.ID,
@@ -136,7 +137,7 @@ func (i *taskUseCaseInteractor) Update(ctx context.Context, req dto.UpdateTaskRe
 	}, nil
 }
 
-func (i *taskUseCaseInteractor) UpdateStatus(ctx context.Context, req dto.UpdateTaskStatusRequest) (dto.UpdateTaskStatusResponse, error) {
+func (i *TaskUseCaseInteractor) UpdateStatus(ctx context.Context, req dto.UpdateTaskStatusRequest) (dto.UpdateTaskStatusResponse, error) {
 
 	err := i.repo.UpdateStatus(ctx, req.ID, req.Status)
 	if err != nil {
@@ -156,7 +157,7 @@ func (i *taskUseCaseInteractor) UpdateStatus(ctx context.Context, req dto.Update
 	}, nil
 }
 
-func (i *taskUseCaseInteractor) UpdateDeadline(ctx context.Context, req dto.UpdateTaskDeadlineRequest) (dto.UpdateTaskDeadlineResponse, error) {
+func (i *TaskUseCaseInteractor) UpdateDeadline(ctx context.Context, req dto.UpdateTaskDeadlineRequest) (dto.UpdateTaskDeadlineResponse, error) {
 
 	err := i.repo.UpdateDeadline(ctx, req.ID, *req.Deadline)
 	if err != nil {
@@ -176,7 +177,7 @@ func (i *taskUseCaseInteractor) UpdateDeadline(ctx context.Context, req dto.Upda
 	}, nil
 }
 
-func (i *taskUseCaseInteractor) CreateAutomaticTask(ctx context.Context, task *entity.Task) error {
+func (i *TaskUseCaseInteractor) CreateAutomaticTask(ctx context.Context, task *entity.Task) error {
 	_, err := i.repo.Create(ctx, *task)
 	return err
 }

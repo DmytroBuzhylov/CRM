@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS tasks
 (
     id              uuid PRIMARY KEY                  DEFAULT gen_random_uuid(),
+    type            varchar(50)              NULL,
     name            VARCHAR(255)             NOT NULL,
     description     TEXT,
     priority        INTEGER                  NOT NULL,

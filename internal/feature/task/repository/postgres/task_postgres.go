@@ -3,109 +3,160 @@ package postgres
 import (
 	"Test/internal/feature/task/entity"
 	"Test/internal/feature/task/repository"
+	"Test/internal/pkg/provider"
 	"context"
 	"fmt"
+	"time"
+
+	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"time"
 )
 
-type TaskRepository struct {
-	db *pgxpool.Pool
+type TaskRepo struct {
+	db        *pgxpool.Pool
+	connector provider.SQLConnector
+	qb        sq.StatementBuilderType
 }
 
-func NewTaskRepository(db *pgxpool.Pool) *TaskRepository {
-	return &TaskRepository{db: db}
+func NewTaskRepository(db *pgxpool.Pool, connector provider.SQLConnector) *TaskRepo {
+	return &TaskRepo{
+		db:        db,
+		connector: connector,
+		qb:        sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+	}
 }
 
-func (r *TaskRepository) Create(ctx context.Context, task entity.Task) (entity.Task, error) {
-	var exists bool
-	err := r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM organizations WHERE id = $1)`, task.OrganizationID).Scan(&exists)
+//func (r *TaskRepo) Create(ctx context.Context, task entity.Task) (entity.Task, error) {
+//	var exists bool
+//	err := r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM organizations WHERE id = $1)`, task.OrganizationID).Scan(&exists)
+//	if err != nil {
+//		return entity.Task{}, fmt.Errorf("failed to find organization: %w", err)
+//	}
+//	if !exists {
+//		return entity.Task{}, fmt.Errorf("invalid organization id")
+//	}
+//	if task.AssigneeID != uuid.Nil {
+//		err = r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM organizations_users WHERE user_id = $1)`, task.AssigneeID).Scan(&exists)
+//		if err != nil {
+//			return entity.Task{}, fmt.Errorf("failed to find assignee: %w", err)
+//		}
+//		if !exists {
+//			return entity.Task{}, fmt.Errorf("invalid assignee id")
+//		}
+//	}
+//
+//	query := `INSERT INTO tasks (id, name, organization_id, description, priority, status, deadline, assignee_id, client_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
+//	_, err = r.db.Exec(ctx, query, task.ID, task.Name, task.OrganizationID, task.Description, task.Priority, task.Status, task.Deadline, task.AssigneeID, task.ClientID, task.CreatedAt, task.UpdatedAt)
+//	if err != nil {
+//		return entity.Task{}, fmt.Errorf("failed to create task: %w", err)
+//	}
+//	return task, nil
+//}
+
+func (r *TaskRepo) Create(ctx context.Context, task entity.Task) (entity.Task, error) {
+	query, _, err := r.qb.Select("SELECT EXISTS (SELECT 1 FROM organizations WHERE id = $1)").
+		From("organizations").
+		Limit(1).
+		ToSql()
 	if err != nil {
-		return entity.Task{}, fmt.Errorf("failed to find organization: %w", err)
+		return entity.Task{}, err
+	}
+
+	var exists bool
+	err = r.connector.QueryRow(ctx, query, task.OrganizationID).Scan(&exists)
+	if err != nil {
+		return entity.Task{}, err
 	}
 	if !exists {
-		return entity.Task{}, fmt.Errorf("invalid organization id")
-	}
-	if task.AssigneeID != uuid.Nil {
-		err = r.db.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM organizations_users WHERE user_id = $1)`, task.AssigneeID).Scan(&exists)
-		if err != nil {
-			return entity.Task{}, fmt.Errorf("failed to find assignee: %w", err)
-		}
-		if !exists {
-			return entity.Task{}, fmt.Errorf("invalid assignee id")
-		}
+		return entity.Task{}, fmt.Errorf("invalid assignee id")
 	}
 
-	query := `INSERT INTO tasks (id, name, organization_id, description, priority, status, deadline, assignee_id, client_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
-	_, err = r.db.Exec(ctx, query, task.ID, task.Name, task.OrganizationID, task.Description, task.Priority, task.Status, task.Deadline, task.AssigneeID, task.ClientID, task.CreatedAt, task.UpdatedAt)
+	query, args, err := r.qb.Insert("tasks").
+		Columns("id", "name", "organization_id", "description", "priority", "status", "deadline", "assignee_id", "client_id", "created_at", "updated_at").
+		Values(task.ID, task.Name, task.OrganizationID, task.Description, task.Priority, task.Status, task.Deadline, task.AssigneeID, task.ClientID, task.CreatedAt, task.UpdatedAt).
+		ToSql()
 	if err != nil {
-		return entity.Task{}, fmt.Errorf("failed to create task: %w", err)
+		return entity.Task{}, err
 	}
+
+	_, err = r.connector.Exec(ctx, query, args...)
+	if err != nil {
+		return entity.Task{}, err
+	}
+
 	return task, nil
 }
 
-func (r *TaskRepository) Get(ctx context.Context, id uuid.UUID) (entity.Task, error) {
-	query := `SELECT id, name, description, priority, status, deadline, assignee_id, client_id, created_at, updated_at FROM tasks WHERE id = $1`
+func (r *TaskRepo) Get(ctx context.Context, id uuid.UUID) (entity.Task, error) {
 	var task entity.Task
-	err := r.db.QueryRow(ctx, query, id).Scan(&task.ID, &task.Name, &task.Description, &task.Priority, &task.Status, &task.Deadline, &task.AssigneeID, &task.ClientID, &task.CreatedAt, &task.UpdatedAt)
+	query, args, err := r.qb.Select("id", "name", "description", "priority", "status", "deadline", "assignee_id", "client_id", "created_at", "updated_at").
+		From("tasks").
+		Where(sq.Eq{"id": id}).
+		ToSql()
 	if err != nil {
-		return entity.Task{}, fmt.Errorf("failed to get task: %w", err)
+		return entity.Task{}, err
 	}
+
+	err = r.connector.QueryRow(ctx, query, args...).
+		Scan(&task.ID, &task.Name, &task.Description, &task.Priority, &task.Status, &task.Deadline, &task.AssigneeID, &task.ClientID, &task.CreatedAt, &task.UpdatedAt)
+	if err != nil {
+		return entity.Task{}, err
+	}
+
 	return task, nil
 }
 
-func (r *TaskRepository) GetTasks(ctx context.Context, filter repository.TaskFilter, pagination repository.Pagination) ([]entity.Task, error) {
-	query := `SELECT id, name, description, priority, status, deadline, assignee_id, client_id, created_at, updated_at FROM tasks WHERE 1=1`
-	args := []interface{}{}
-	argCount := 1
+func (r *TaskRepo) GetTasks(ctx context.Context, filter repository.TaskFilter, pagination repository.Pagination) ([]entity.Task, error) {
+	builder := r.qb.Select(
+		"id",
+		"name",
+		"description",
+		"priority",
+		"status",
+		"deadline",
+		"assignee_id",
+		"client_id",
+		"created_at",
+		"updated_at",
+	).From("tasks")
 
 	if filter.Name != "" {
-		query += fmt.Sprintf(" AND name LIKE $%d", argCount)
-		args = append(args, "%"+filter.Name+"%")
-		argCount++
+		builder = builder.Where(sq.ILike{"name": "%" + filter.Name + "%"})
 	}
 	if filter.Priority > 0 {
-		query += fmt.Sprintf(" AND priority = $%d", argCount)
-		args = append(args, filter.Priority)
-		argCount++
+		builder = builder.Where(sq.Eq{"priority": filter.Priority})
 	}
 	if filter.Status != "" {
-		query += fmt.Sprintf(" AND status = $%d", argCount)
-		args = append(args, filter.Status)
-		argCount++
+		builder = builder.Where(sq.Eq{"status": filter.Status})
 	}
 	if filter.Deadline != nil {
-		query += fmt.Sprintf(" AND deadline::date = $%d::date", argCount)
-		args = append(args, *filter.Deadline)
-		argCount++
+		builder = builder.Where(sq.Expr("deadline::date = ?", *filter.Deadline))
 	}
 	if filter.AssigneeID != uuid.Nil {
-		query += fmt.Sprintf(" AND assignee_id = $%d", argCount)
-		args = append(args, filter.AssigneeID)
-		argCount++
+		builder = builder.Where(sq.Eq{"assignee_id": filter.AssigneeID})
 	}
 	if filter.ClientID != uuid.Nil {
-		query += fmt.Sprintf(" AND client_id = $%d", argCount)
-		args = append(args, filter.ClientID)
-		argCount++
+		builder = builder.Where(sq.Eq{"client_id": filter.ClientID})
 	}
 	if filter.CreatedAt != nil {
-		query += fmt.Sprintf(" AND created_at::date = $%d::date", argCount)
-		args = append(args, *filter.CreatedAt)
-		argCount++
+		builder = builder.Where(sq.Expr("created_at::date = ?", *filter.CreatedAt))
 	}
 	if filter.UpdatedAt != nil {
-		query += fmt.Sprintf(" AND updated_at::date = $%d::date", argCount)
-		args = append(args, *filter.UpdatedAt)
-		argCount++
+		builder = builder.Where(sq.Expr("updated_at::date = ?", *filter.UpdatedAt))
 	}
 
 	if pagination.Limit > 0 {
-		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argCount, argCount+1)
-		args = append(args, pagination.Limit, (pagination.Page-1)*pagination.Limit)
+		offset := (pagination.Page - 1) * pagination.Limit
+		builder = builder.Limit(uint64(pagination.Limit)).Offset(uint64(offset))
 	}
-	rows, err := r.db.Query(ctx, query, args...)
+
+	sql, args, err := builder.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build SQL query: %w", err)
+	}
+
+	rows, err := r.db.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query tasks: %w", err)
 	}
@@ -114,16 +165,32 @@ func (r *TaskRepository) GetTasks(ctx context.Context, filter repository.TaskFil
 	var tasks []entity.Task
 	for rows.Next() {
 		var task entity.Task
-		err = rows.Scan(&task.ID, &task.Name, &task.Description, &task.Priority, &task.Status, &task.Deadline, &task.AssigneeID, &task.ClientID, &task.CreatedAt, &task.UpdatedAt)
+		err = rows.Scan(
+			&task.ID,
+			&task.Name,
+			&task.Description,
+			&task.Priority,
+			&task.Status,
+			&task.Deadline,
+			&task.AssigneeID,
+			&task.ClientID,
+			&task.CreatedAt,
+			&task.UpdatedAt,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan task: %w", err)
 		}
 		tasks = append(tasks, task)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %w", err)
+	}
+
 	return tasks, nil
 }
 
-func (r *TaskRepository) Update(ctx context.Context, task entity.Task) (entity.Task, error) {
+func (r *TaskRepo) Update(ctx context.Context, task entity.Task) (entity.Task, error) {
 	query := `UPDATE tasks SET name = $2, description = $3, priority = $4, status = $5, deadline = $6, assignee_id = $7, client_id = $8, updated_at = $9 WHERE id = $1 RETURNING updated_at`
 	err := r.db.QueryRow(ctx, query, task.ID, task.Name, task.Description, task.Priority, task.Status, task.Deadline, task.AssigneeID, task.ClientID, time.Now()).Scan(&task.UpdatedAt)
 	if err != nil {
@@ -132,7 +199,7 @@ func (r *TaskRepository) Update(ctx context.Context, task entity.Task) (entity.T
 	return task, nil
 }
 
-func (r *TaskRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
+func (r *TaskRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
 	query := `UPDATE tasks SET status = $2, updated_at = $3 WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, id, status, time.Now())
 	if err != nil {
@@ -141,7 +208,7 @@ func (r *TaskRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status 
 	return nil
 }
 
-func (r *TaskRepository) UpdateDeadline(ctx context.Context, id uuid.UUID, deadline time.Time) error {
+func (r *TaskRepo) UpdateDeadline(ctx context.Context, id uuid.UUID, deadline time.Time) error {
 	query := `UPDATE tasks SET deadline = $2, updated_at = $3 WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, id, deadline, time.Now())
 	if err != nil {
@@ -150,7 +217,7 @@ func (r *TaskRepository) UpdateDeadline(ctx context.Context, id uuid.UUID, deadl
 	return nil
 }
 
-func (r *TaskRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *TaskRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM tasks WHERE id = $1`
 	_, err := r.db.Exec(ctx, query, id)
 	if err != nil {

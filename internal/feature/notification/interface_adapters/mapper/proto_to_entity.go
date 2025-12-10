@@ -2,61 +2,61 @@ package mapper
 
 import (
 	"Test/internal/feature/notification/entity"
-	notification_const "Test/internal/feature/notification/entity/const"
 	pb "Test/internal/feature/notification/interface_adapters/proto/gen"
+	notification_const2 "Test/internal/pkg/const"
 	"fmt"
 	"google.golang.org/protobuf/proto"
 )
 
-func PBResourceTypeToEntity(pbType pb.ResourceType) (notification_const.ResourceType, error) {
+func PBResourceTypeToEntity(pbType pb.ResourceType) (notification_const2.ResourceType, error) {
 	switch pbType {
 	case pb.ResourceType_RESOURCE_TYPE_ORDER:
-		return notification_const.ResourceOrder, nil
+		return notification_const2.ResourceOrder, nil
 	case pb.ResourceType_RESOURCE_TYPE_UNSPECIFIED:
-		return notification_const.ResourceUnspecified, nil
+		return notification_const2.ResourceUnspecified, nil
 	case pb.ResourceType_RESOURCE_TYPE_TABLE:
-		return notification_const.ResourceTable, nil
+		return notification_const2.ResourceTable, nil
 	case pb.ResourceType_RESOURCE_TYPE_TASK:
-		return notification_const.ResourceTask, nil
+		return notification_const2.ResourceTask, nil
 	case pb.ResourceType_RESOURCE_TYPE_MENU_ITEM:
-		return notification_const.ResourceMenuItem, nil
+		return notification_const2.ResourceMenuItem, nil
 	case pb.ResourceType_RESOURCE_TYPE_INVENTORY:
-		return notification_const.ResourceInventory, nil
+		return notification_const2.ResourceInventory, nil
 	case pb.ResourceType_RESOURCE_TYPE_SHIFT:
-		return notification_const.ResourceShift, nil
+		return notification_const2.ResourceShift, nil
 	case pb.ResourceType_RESOURCE_TYPE_EMPLOYEE:
-		return notification_const.ResourceEmployee, nil
+		return notification_const2.ResourceEmployee, nil
 	case pb.ResourceType_RESOURCE_TYPE_KITCHEN_STATION:
-		return notification_const.ResourceKitchenStation, nil
+		return notification_const2.ResourceKitchenStation, nil
 	case pb.ResourceType_RESOURCE_TYPE_INCIDENT:
-		return notification_const.ResourceIncident, nil
+		return notification_const2.ResourceIncident, nil
 
 	default:
 		return "", fmt.Errorf("the specified type does not exist")
 	}
 }
 
-func ResourceEntityToPBType(resType notification_const.ResourceType) (pb.ResourceType, error) {
+func ResourceEntityToPBType(resType notification_const2.ResourceType) (pb.ResourceType, error) {
 	switch resType {
-	case notification_const.ResourceOrder:
+	case notification_const2.ResourceOrder:
 		return pb.ResourceType_RESOURCE_TYPE_ORDER, nil
-	case notification_const.ResourceUnspecified:
+	case notification_const2.ResourceUnspecified:
 		return pb.ResourceType_RESOURCE_TYPE_UNSPECIFIED, nil
-	case notification_const.ResourceTable:
+	case notification_const2.ResourceTable:
 		return pb.ResourceType_RESOURCE_TYPE_TABLE, nil
-	case notification_const.ResourceTask:
+	case notification_const2.ResourceTask:
 		return pb.ResourceType_RESOURCE_TYPE_TASK, nil
-	case notification_const.ResourceMenuItem:
+	case notification_const2.ResourceMenuItem:
 		return pb.ResourceType_RESOURCE_TYPE_MENU_ITEM, nil
-	case notification_const.ResourceInventory:
+	case notification_const2.ResourceInventory:
 		return pb.ResourceType_RESOURCE_TYPE_INVENTORY, nil
-	case notification_const.ResourceShift:
+	case notification_const2.ResourceShift:
 		return pb.ResourceType_RESOURCE_TYPE_SHIFT, nil
-	case notification_const.ResourceEmployee:
+	case notification_const2.ResourceEmployee:
 		return pb.ResourceType_RESOURCE_TYPE_EMPLOYEE, nil
-	case notification_const.ResourceKitchenStation:
+	case notification_const2.ResourceKitchenStation:
 		return pb.ResourceType_RESOURCE_TYPE_KITCHEN_STATION, nil
-	case notification_const.ResourceIncident:
+	case notification_const2.ResourceIncident:
 		return pb.ResourceType_RESOURCE_TYPE_INCIDENT, nil
 
 	default:
@@ -64,91 +64,91 @@ func ResourceEntityToPBType(resType notification_const.ResourceType) (pb.Resourc
 	}
 }
 
-func PBNotificationTypeToEntity(pbType pb.NotificationType) (notification_const.NotificationType, error) {
+func PBNotificationTypeToEntity(pbType pb.NotificationType) (notification_const2.NotificationType, error) {
 	switch pbType {
 	case pb.NotificationType_NOTIFICATION_TYPE_UNSPECIFIED:
-		return notification_const.NotificationUnspecified, nil
+		return notification_const2.NotificationUnspecified, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_ORDER:
-		return notification_const.NotificationOrder, nil
+		return notification_const2.NotificationOrder, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_TASK:
-		return notification_const.NotificationTask, nil
+		return notification_const2.NotificationTask, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_SYSTEM:
-		return notification_const.NotificationSystem, nil
+		return notification_const2.NotificationSystem, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_CLIENT_REQUEST:
-		return notification_const.NotificationClientRequest, nil
+		return notification_const2.NotificationClientRequest, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_SHIFT_STARTED:
-		return notification_const.NotificationShiftStarted, nil
+		return notification_const2.NotificationShiftStarted, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_SHIFT_ENDED:
-		return notification_const.NotificationShiftEnded, nil
+		return notification_const2.NotificationShiftEnded, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_SHIFT_OVERDUE:
-		return notification_const.NotificationShiftOverdue, nil
+		return notification_const2.NotificationShiftOverdue, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_FOOD_READY:
-		return notification_const.NotificationFoodReady, nil
+		return notification_const2.NotificationFoodReady, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_INCIDENT:
-		return notification_const.NotificationIncident, nil
+		return notification_const2.NotificationIncident, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_EQUIPMENT_ALERT:
-		return notification_const.NotificationEquipmentAlert, nil
+		return notification_const2.NotificationEquipmentAlert, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_SCREEN_MESSAGE:
-		return notification_const.NotificationScreenMessage, nil
+		return notification_const2.NotificationScreenMessage, nil
 
 	case pb.NotificationType_NOTIFICATION_TYPE_MANAGER_ALERT:
-		return notification_const.NotificationManagerAlert, nil
+		return notification_const2.NotificationManagerAlert, nil
 
 	default:
 		return "", fmt.Errorf("the specified type does not exist")
 	}
 }
 
-func NotificationEntityToPBType(notType notification_const.NotificationType) (pb.NotificationType, error) {
+func NotificationEntityToPBType(notType notification_const2.NotificationType) (pb.NotificationType, error) {
 	switch notType {
-	case notification_const.NotificationUnspecified:
+	case notification_const2.NotificationUnspecified:
 		return pb.NotificationType_NOTIFICATION_TYPE_UNSPECIFIED, nil
 
-	case notification_const.NotificationOrder:
+	case notification_const2.NotificationOrder:
 		return pb.NotificationType_NOTIFICATION_TYPE_ORDER, nil
 
-	case notification_const.NotificationTask:
+	case notification_const2.NotificationTask:
 		return pb.NotificationType_NOTIFICATION_TYPE_TASK, nil
 
-	case notification_const.NotificationSystem:
+	case notification_const2.NotificationSystem:
 		return pb.NotificationType_NOTIFICATION_TYPE_SYSTEM, nil
 
-	case notification_const.NotificationClientRequest:
+	case notification_const2.NotificationClientRequest:
 		return pb.NotificationType_NOTIFICATION_TYPE_CLIENT_REQUEST, nil
 
-	case notification_const.NotificationShiftStarted:
+	case notification_const2.NotificationShiftStarted:
 		return pb.NotificationType_NOTIFICATION_TYPE_SHIFT_STARTED, nil
 
-	case notification_const.NotificationShiftEnded:
+	case notification_const2.NotificationShiftEnded:
 		return pb.NotificationType_NOTIFICATION_TYPE_SHIFT_ENDED, nil
 
-	case notification_const.NotificationShiftOverdue:
+	case notification_const2.NotificationShiftOverdue:
 		return pb.NotificationType_NOTIFICATION_TYPE_SHIFT_OVERDUE, nil
 
-	case notification_const.NotificationFoodReady:
+	case notification_const2.NotificationFoodReady:
 		return pb.NotificationType_NOTIFICATION_TYPE_FOOD_READY, nil
 
-	case notification_const.NotificationIncident:
+	case notification_const2.NotificationIncident:
 		return pb.NotificationType_NOTIFICATION_TYPE_INCIDENT, nil
 
-	case notification_const.NotificationEquipmentAlert:
+	case notification_const2.NotificationEquipmentAlert:
 		return pb.NotificationType_NOTIFICATION_TYPE_EQUIPMENT_ALERT, nil
 
-	case notification_const.NotificationScreenMessage:
+	case notification_const2.NotificationScreenMessage:
 		return pb.NotificationType_NOTIFICATION_TYPE_SCREEN_MESSAGE, nil
 
-	case notification_const.NotificationManagerAlert:
+	case notification_const2.NotificationManagerAlert:
 		return pb.NotificationType_NOTIFICATION_TYPE_MANAGER_ALERT, nil
 
 	default:

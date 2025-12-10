@@ -9,7 +9,7 @@ type StaffInvitation struct {
 	ID             uuid.UUID
 	OrganizationID uuid.UUID
 	InvitedEmail   string
-	InviterUserId  uuid.UUID
+	InviterUserID  uuid.UUID
 	InvitationCode string
 	Position       string
 	RoleID         uuid.UUID

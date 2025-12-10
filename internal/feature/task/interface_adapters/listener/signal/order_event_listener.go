@@ -2,7 +2,6 @@ package signal
 
 import (
 	"Test/internal/feature/order/entity"
-	entity2 "Test/internal/feature/task/entity"
 	"Test/internal/feature/task/usecase"
 	"context"
 )
@@ -17,7 +16,7 @@ func NewOrderEventListener(taskUC usecase.TaskUseCase) *OrderEventListener {
 
 func (l *OrderEventListener) Register(ctx context.Context) {
 	entity.OrderCreatedEvent.AddListener(func(ctx context.Context, items *entity.OrderWithItems) {
-			"The order has been created. Please contact the guest to clarify and confirm the order.",
+		//"The order has been created. Please contact the guest to clarify and confirm the order."
 
 	})
 
@@ -52,8 +51,4 @@ func (l *OrderEventListener) Register(ctx context.Context) {
 
 func (l *OrderEventListener) UnRegister(ctx context.Context) error {
 	return nil
-}
-
-func (l *OrderEventListener) CreateAutoTask(ctx context.Context, task entity2.Task) error {
-
 }

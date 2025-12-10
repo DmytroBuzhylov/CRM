@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go_api
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET=your_super_secret_key
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=test_db
+      - REDIS_HOST=cache
+      - REDIS_PORT=6379
+
+    depends_on:
+      - db
+      - cache
+
+  # 2. СЕРВИС БАЗЫ ДАННЫХ (PostgreSQL)
+  db:
+    image: postgres:14-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      # Переменные окружения, которые использует образ postgres для настройки.
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=test_db
+    volumes:
+      # Сохранение данных на хосте, чтобы они не потерялись после перезапуска контейнера.
+      - postgres_data:/var/lib/postgresql/data/
+    # Опционально: открыть порт только для отладки, в продакшене не нужно.
+    # ports:
+    #   - "5432:5432"
+
+  # 3. СЕРВИС КЭША (Redis)
+  cache:
+    image: redis:6-alpine
+    container_name: redis_cache
+    restart: always
+    # volumes:
+    #   - redis_data:/data # Можно добавить для сохранения данных, если нужно.
+
+# Определяем тома (Volumes) для сохранения персистентных данных
+volumes:
+  postgres_data:
+  redis_data:

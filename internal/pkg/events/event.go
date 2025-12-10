@@ -11,10 +11,14 @@ type ChanEventBus struct {
 	Errors chan<- *EventError
 }
 
-func NewEventBus(bufferSize int) (*EventBus, <-chan *Event, <-chan *EventError) {
+func NewEventBus(bufferSize int) (*ChanEventBus, <-chan *Event, <-chan *EventError) {
 	evCh := make(chan *Event, bufferSize)
 	errCh := make(chan *EventError, bufferSize)
-	return &EventBus{Events: evCh, Errors: errCh}, evCh, errCh
+	return &ChanEventBus{Events: evCh, Errors: errCh}, evCh, errCh
+}
+
+func (b *ChanEventBus) SendEvent(ev *Event) {
+	b.Events <- ev
 }
 
 type Event struct {

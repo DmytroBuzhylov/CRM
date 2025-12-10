@@ -1,6 +1,7 @@
 package entity
 
 import (
+	system_const "Test/internal/pkg/const"
 	"github.com/google/uuid"
 	"github.com/maniartech/signals"
 	"time"
@@ -15,6 +16,7 @@ var (
 
 type Task struct {
 	ID             uuid.UUID
+	Type           system_const.TaskType
 	Name           string
 	Description    string
 	Priority       uint
